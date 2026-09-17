@@ -1,0 +1,10 @@
+/* Additional custom properties not covered by Tailwind theme */
+:root {
+  /* Grid pattern for hero background */
+  --grid-pattern: linear-gradient(to right, rgba(196, 197, 215, 0.2) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(196, 197, 215, 0.2) 1px, transparent 1px);
+
+  /* Ingest grid pattern */
+  --ingest-grid-pattern: linear-gradient(to right, rgb(196 197 215 / 0.18) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(196 197 215 / 0.18) 1px, transparent 1px);
+}

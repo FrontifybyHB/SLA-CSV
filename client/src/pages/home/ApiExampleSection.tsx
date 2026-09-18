@@ -1,12 +1,8 @@
-import { memo, useCallback } from 'react'
+import { memo, useCallback, useMemo } from 'react'
+import { getAbsoluteApiBase } from '@/shared/api/api-base'
 import { Icon } from '@/shared/ui/Icon'
 import { IconButton } from '@/shared/ui/IconButton'
 import { useCopyToClipboard } from '@/shared/lib/useCopyToClipboard'
-
-const CURL_SNIPPET = `curl -X POST http://localhost:3000/api/v1/datasets \\
-  -H "Authorization: Bearer $TOKEN" \\
-  -H "Content-Type: text/csv" \\
-  --data-binary @telemetry.csv`
 
 interface CodeLine {
   className: string
@@ -19,9 +15,10 @@ interface CodeLine {
   suffix2?: string
 }
 
-const CODE_LINES: readonly CodeLine[] = [
+function buildCodeLines(uploadUrl: string): readonly CodeLine[] {
+  return [
   { className: 'text-sla-outline', content: '# Upload a CSV extract (same call the dashboard makes)' },
-  { className: 'text-sla-primary font-semibold', content: 'curl', suffix: ' -X POST http://localhost:3000/api/v1/datasets {' },
+  { className: 'text-sla-primary font-semibold', content: 'curl', suffix: ` -X POST ${uploadUrl} {` },
   { indent: 1, className: '', content: '-H ', highlight: '"Authorization: Bearer $TOKEN"', suffix: ' {' },
   { indent: 1, className: '', content: '-H ', highlight: '"Content-Type: text/csv"', suffix: ' {' },
   { indent: 1, className: '', content: '--data-binary @telemetry.csv' },
@@ -37,11 +34,21 @@ const CODE_LINES: readonly CodeLine[] = [
   { indent: 1, className: 'text-sla-secondary', content: '}' },
   { className: 'text-sla-secondary', content: '}' },
 ] as const
+}
 
 export const ApiExampleSection = memo(function ApiExampleSection() {
   const { copied, copy } = useCopyToClipboard()
+  const uploadUrl = `${getAbsoluteApiBase()}/datasets`
+  const codeLines = useMemo(() => buildCodeLines(uploadUrl), [uploadUrl])
+  const curlSnippet = useMemo(
+    () => `curl -X POST ${uploadUrl} \\
+  -H "Authorization: Bearer $TOKEN" \\
+  -H "Content-Type: text/csv" \\
+  --data-binary @telemetry.csv`,
+    [uploadUrl],
+  )
 
-  const handleCopy = useCallback(() => void copy(CURL_SNIPPET), [copy])
+  const handleCopy = useCallback(() => void copy(curlSnippet), [copy, curlSnippet])
 
   return (
     <section id="api" className="py-12 sm:py-18 lg:py-24 xl:py-32 bg-sla-surface-container-lowest border-b border-sla-outline-variant/60">
@@ -108,7 +115,7 @@ export const ApiExampleSection = memo(function ApiExampleSection() {
 
               <div className="overflow-x-auto max-w-full bg-sla-surface-container-lowest p-4 sm:p-5 font-mono text-label-sm leading-[1.625]">
                 <pre className="m-0 whitespace-pre overflow-wrap-normal break-normal">
-                  {CODE_LINES.map((line, i) => (
+                  {codeLines.map((line, i) => (
                     <span key={i} className={line.className}>
                       {line.indent === 2 ? '    ' : line.indent ? '  ' : ''}
                       {line.content}
@@ -116,7 +123,7 @@ export const ApiExampleSection = memo(function ApiExampleSection() {
                       {line.highlight && <span className={`font-mono ${line.highlightClass || ''}`}>{line.highlight}</span>}
                       {line.suffix2}
                       {line.highlightClass && line.highlightContent && <span className={line.highlightClass}>{line.highlightContent}</span>}
-                      {i < CODE_LINES.length - 1 ? '\n' : ''}
+                      {i < codeLines.length - 1 ? '\n' : ''}
                     </span>
                   ))}
                 </pre>

@@ -1,8 +1,8 @@
+import { getApiBase } from './api-base'
 import { request, type RequestControl } from './kernel'
 import type { QueryValues } from './query-string'
 
-const defaultApiBase = 'http://localhost:3000/api/v1'
-const apiBase = (import.meta.env.VITE_API_BASE ?? defaultApiBase).replace(/\/+$/, '')
+const apiBase = getApiBase()
 
 const DEFAULT_GET_TIMEOUT_MS = 15_000
 const DEFAULT_UPLOAD_TIMEOUT_MS = 60_000

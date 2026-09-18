@@ -320,9 +320,11 @@ COOKIE_DOMAIN=localhost
 CLIENT_ORIGIN=http://localhost:5173
 ```
 
-**Client** (Vite uses `.env` in `client/`):
+**Client** (optional — Vite reads `.env` in `client/`):
 ```env
-VITE_API_BASE=http://localhost:3000/api/v1
+# Defaults to same-origin /api/v1 (production + local dev via Vite proxy).
+# Only set when the API is on another domain:
+# VITE_API_BASE=https://your-production-domain.com/api/v1
 ```
 
 ### Install & Run

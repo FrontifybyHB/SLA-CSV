@@ -1,3 +1,4 @@
+import { getApiBase } from './api-base'
 import { ApiError, isAbortError } from './api-error'
 import { buildQueryString, type QueryValues } from './query-string'
 
@@ -15,7 +16,7 @@ interface KernelRequest extends RequestControl {
   rawBody?: BodyInit
 }
 
-const AUTH_BASE = `${(import.meta.env.VITE_API_BASE ?? '/api/v1').replace(/\/+$/, '')}/auth`
+const AUTH_BASE = `${getApiBase()}/auth`
 const REFRESH_ENDPOINT = `${AUTH_BASE}/refresh`
 const EXPIRED_TOKEN_CODE = 'ACCESS_TOKEN_EXPIRED'
 

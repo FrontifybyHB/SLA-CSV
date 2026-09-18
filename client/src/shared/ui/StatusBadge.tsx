@@ -17,7 +17,7 @@ interface StatusBadgeProps {
 
 export function StatusBadge({ tone = 'neutral', children }: StatusBadgeProps) {
   return (
-    <span className={`inline-block px-2 py-0.5 border rounded-sm bg-sla-bg text-label-sm font-semibold uppercase tracking-wider whitespace-nowrap ${toneClasses[tone]}`}>
+    <span className={`inline-block shrink-0 px-2 py-0.5 border rounded-sm bg-sla-bg text-label-sm font-semibold uppercase tracking-wider whitespace-nowrap ${toneClasses[tone]}`}>
       {children}
     </span>
   )

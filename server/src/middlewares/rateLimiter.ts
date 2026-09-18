@@ -12,8 +12,16 @@ interface Bucket {
   resetAt: number;
 }
 
-// Minimal in-memory fixed-window limiter. Fine for a single instance; replace with a
-// shared store (Redis) if multiple server processes run behind a load balancer.
+function getClientIp(req: Request): string {
+  // When behind a trusted proxy (app.set('trust proxy', 1)), req.ip is safe.
+  // For direct connections or untrusted proxies, use socket.remoteAddress.
+  // NEVER trust X-Forwarded-For directly — attackers control it.
+  if (req.ip && req.ip !== "::1" && req.ip !== "127.0.0.1" && req.ip !== "unknown") {
+    return req.ip;
+  }
+  return req.socket?.remoteAddress ?? "unknown";
+}
+
 export class InMemoryRateLimiter {
   private readonly buckets = new Map<string, Bucket>();
   private readonly sweepTimer: NodeJS.Timeout;
@@ -28,7 +36,7 @@ export class InMemoryRateLimiter {
 
   middleware(): RequestHandler {
     return (req: Request, _res: Response, next: NextFunction): void => {
-      const key = req.ip ?? "unknown";
+      const key = getClientIp(req);
       const now = Date.now();
       const bucket = this.buckets.get(key);
 

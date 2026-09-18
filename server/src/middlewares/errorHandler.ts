@@ -16,16 +16,21 @@ export function errorHandler(
   const message =
     err instanceof AppError ? err.message : "Internal Server Error";
 
+  const isProduction = env.NODE_ENV === "production";
+  // Never log stack traces in production, even if NODE_ENV is misconfigured
+  const shouldLogStack = !isProduction;
+
   logger.error(message, {
     statusCode,
     method: req.method,
     path: req.originalUrl,
     requestId: req.requestId,
-    stack: env.NODE_ENV === "development" ? (err as Error).stack : undefined,
+    stack: shouldLogStack ? (err as Error).stack : undefined,
   });
 
+  // In production, never expose internal error details
   const bodyMessage =
-    statusCode >= 500 && env.NODE_ENV === "production"
+    statusCode >= 500 && isProduction
       ? "Internal Server Error"
       : message;
 
@@ -36,7 +41,7 @@ export function errorHandler(
     requestId: req.requestId,
     errors: err instanceof ValidationError ? err.fields : undefined,
     stack:
-      env.NODE_ENV === "development" && statusCode >= 500
+      shouldLogStack && statusCode >= 500
         ? (err as Error).stack
         : undefined,
   });

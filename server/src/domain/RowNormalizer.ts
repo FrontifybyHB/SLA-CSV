@@ -9,6 +9,7 @@ export interface NormalizedRow {
   timestamp: Date;
   latencyMs: number | null;
   status: CanonicalStatus;
+  region: string | null;
 }
 
 export interface RowIssue {
@@ -31,6 +32,10 @@ export class RowNormalizer {
     private readonly fieldAliasResolver: FieldAliasResolver,
   ) {}
 
+  resolveHeaderMap(headers: string[]): HeaderMapping {
+    return this.fieldAliasResolver.resolveHeaderMap(headers);
+  }
+
   normalize(raw: RawRow, headerMap?: HeaderMapping): NormalizationResult {
     const issues: RowIssue[] = [];
     const map = headerMap ?? this.fieldAliasResolver.resolveHeaderMap(raw.headers);
@@ -45,6 +50,7 @@ export class RowNormalizer {
     const rawLatency = getCell(map.latencyIdx);
     const rawStatus = getCell(map.statusIdx);
     const rawService = getCell(map.serviceIdx);
+    const rawRegion = map.regionIdx >= 0 ? getCell(map.regionIdx) : "";
 
     // Check required fields
     if (!rawAgent) {
@@ -94,8 +100,19 @@ export class RowNormalizer {
     // Normalize Agent ID
     const agentId = this.normalizeAgent(rawAgent);
 
-    // Normalize Service (default to "default" if missing)
+    // Normalize Service (default to "default" if missing, but flag it)
     const service = rawService || "default";
+    if (!rawService) {
+      issues.push({
+        row: raw.line,
+        field: "service",
+        code: "MISSING_SERVICE",
+        message: "Missing service name; defaulted to \"default\"",
+      });
+    }
+
+    // Normalize region (optional; null when absent)
+    const region = rawRegion ? rawRegion.trim() : null;
 
     // Normalize Status
     const statusEvidence = this.statusClassifier.classify(rawStatus);
@@ -126,6 +143,7 @@ export class RowNormalizer {
       timestamp: timestampResult.date,
       latencyMs: latencyResult.latencyMs,
       status: statusEvidence.status,
+      region,
     };
 
     return { row, issues };
@@ -145,7 +163,35 @@ export class RowNormalizer {
       const date = new Date(millis);
       return { date: Number.isNaN(date.getTime()) ? null : date };
     }
-    // Try standard ISO-8601 / Date parse
+    // Bare `YYYY-MM-DD HH:mm:ss` (no timezone) -> interpret as UTC.
+    const naiveDateTime = trimmed.match(
+      /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{1,3}))?)?$/,
+    );
+    if (naiveDateTime) {
+      const [, y, mo, d, h, mi, s = "00", ms = "000"] = naiveDateTime;
+      const date = new Date(
+        Date.UTC(
+          Number(y), Number(mo) - 1, Number(d),
+          Number(h), Number(mi), Number(s), Number(ms.padEnd(3, "0")),
+        ),
+      );
+      if (!Number.isNaN(date.getTime())) return { date };
+    }
+    // `DD/MM/YYYY[ HH:mm[:ss]]` (common in manual exports) -> UTC.
+    const dmy = trimmed.match(
+      /^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?$/,
+    );
+    if (dmy) {
+      const [, dd, mm, yyyy, hh = "00", mi = "00", ss = "00"] = dmy;
+      const date = new Date(
+        Date.UTC(
+          Number(yyyy), Number(mm) - 1, Number(dd),
+          Number(hh), Number(mi), Number(ss),
+        ),
+      );
+      if (!Number.isNaN(date.getTime())) return { date };
+    }
+    // Try standard ISO-8601 / RFC3339 / Date parse (handles Z and ±offsets → UTC internally)
     const date = new Date(trimmed);
     if (Number.isNaN(date.getTime())) {
       return { date: null };

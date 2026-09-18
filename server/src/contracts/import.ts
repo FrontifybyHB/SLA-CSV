@@ -13,9 +13,11 @@ export interface RawObservation {
 
 export interface ParsedObservation {
   agentId: AgentId;
+  service: string;
   timestamp: Date;
   latencyMs: number | null;
   status: AvailabilityStatus;
+  region?: string | null;
 }
 
 export type SlotKey = string;
@@ -29,6 +31,7 @@ export interface SlotObservation {
 
 export interface ResolvedSlot {
   slotKey: SlotKey;
+  service: string;
   startTime: Date;
   endTime: Date;
   durationSeconds: number;
@@ -109,8 +112,11 @@ export type ImportResult =
       observationCount: number;
       slotCount: number;
       issueCount: number;
+      invalidRows: number;
+      duplicateRows: number;
       fileHash: string;
       policyVersion: string;
       startDate: Date;
       endDate: Date;
+      metrics?: import('../domain/QualityMetricsCalculator.js').QualityMetrics;
     };

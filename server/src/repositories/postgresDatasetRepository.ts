@@ -5,7 +5,10 @@ import type { DatasetSummary, SaveImportResult } from "../contracts/repository.j
 import type { IDatasetRepository } from "../contracts/repository.interface.js";
 import { AppError } from "../middlewares/appError.js";
 
-const BATCH_SIZE = 500;
+const BATCH_SIZE = 1000;
+
+const MAX_LIST_PAGE_SIZE = 100;
+const DEFAULT_LIST_PAGE_SIZE = 20;
 
 interface DatasetRow {
   dataset_id: string;
@@ -47,13 +50,13 @@ export class PostgresDatasetRepository implements IDatasetRepository {
          d.end_date,
          d.agent_count,
          d.uploaded_at,
-         (SELECT count(*)::int FROM observations o WHERE o.dataset_id = d.dataset_id) AS observation_count,
-         (SELECT count(*)::int FROM slots s WHERE s.dataset_id = d.dataset_id) AS slot_count,
-         (SELECT count(*)::int FROM data_quality_issues i WHERE i.dataset_id = d.dataset_id) AS issue_count
-       FROM datasets d
-       WHERE d.file_hash = $1 AND d.policy_version = $2 AND d.user_id = $3
-       ORDER BY d.uploaded_at DESC
-       LIMIT 1`,
+         d.observation_count,
+         d.slot_count,
+         d.issue_count
+        FROM datasets d
+        WHERE d.file_hash = $1 AND d.policy_version = $2 AND d.user_id = $3
+        ORDER BY d.uploaded_at DESC
+        LIMIT 1`,
       [hash, policyVersion, userId],
     );
 
@@ -64,26 +67,51 @@ export class PostgresDatasetRepository implements IDatasetRepository {
     return rowToSummary(row);
   }
 
-  async listDatasets(userId: string): Promise<DatasetSummary[]> {
-    const result = await this.pool.query<DatasetRow>(
-      `SELECT
-         d.dataset_id,
-         d.filename,
-         d.file_hash,
-         d.policy_version,
-         d.start_date,
-         d.end_date,
-         d.agent_count,
-         d.uploaded_at,
-         (SELECT count(*)::int FROM observations o WHERE o.dataset_id = d.dataset_id) AS observation_count,
-         (SELECT count(*)::int FROM slots s WHERE s.dataset_id = d.dataset_id) AS slot_count,
-         (SELECT count(*)::int FROM data_quality_issues i WHERE i.dataset_id = d.dataset_id) AS issue_count
-       FROM datasets d
-       WHERE d.user_id = $1
-       ORDER BY d.uploaded_at DESC`,
-      [userId],
+  async listDatasets(userId: string, page = 1, pageSize = DEFAULT_LIST_PAGE_SIZE): Promise<DatasetSummary[]> {
+    const { datasets } = await this.listDatasetsPaginated(userId, page, pageSize);
+    return datasets;
+  }
+
+  async listDatasetsPaginated(
+    userId: string,
+    page: number,
+    pageSize: number,
+  ): Promise<{ datasets: DatasetSummary[]; total: number }> {
+    const safePage = Math.max(1, Math.floor(page) || 1);
+    const safePageSize = Math.min(
+      MAX_LIST_PAGE_SIZE,
+      Math.max(1, Math.floor(pageSize) || DEFAULT_LIST_PAGE_SIZE),
     );
-    return result.rows.map(rowToSummary);
+    const offset = (safePage - 1) * safePageSize;
+    const [rows, countResult] = await Promise.all([
+      this.pool.query<DatasetRow>(
+        `SELECT
+           d.dataset_id,
+           d.filename,
+           d.file_hash,
+           d.policy_version,
+           d.start_date,
+           d.end_date,
+           d.agent_count,
+           d.uploaded_at,
+           d.observation_count,
+           d.slot_count,
+           d.issue_count
+         FROM datasets d
+         WHERE d.user_id = $1
+         ORDER BY d.uploaded_at DESC
+         LIMIT $2 OFFSET $3`,
+        [userId, safePageSize, offset],
+      ),
+      this.pool.query<{ count: number }>(
+        `SELECT count(*)::int AS count FROM datasets WHERE user_id = $1`,
+        [userId],
+      ),
+    ]);
+    return {
+      datasets: rows.rows.map(rowToSummary),
+      total: countResult.rows[0]?.count ?? 0,
+    };
   }
 
   async findById(datasetId: string, userId: string): Promise<DatasetSummary | null> {
@@ -97,12 +125,12 @@ export class PostgresDatasetRepository implements IDatasetRepository {
          d.end_date,
          d.agent_count,
          d.uploaded_at,
-         (SELECT count(*)::int FROM observations o WHERE o.dataset_id = d.dataset_id) AS observation_count,
-         (SELECT count(*)::int FROM slots s WHERE s.dataset_id = d.dataset_id) AS slot_count,
-         (SELECT count(*)::int FROM data_quality_issues i WHERE i.dataset_id = d.dataset_id) AS issue_count
-       FROM datasets d
-       WHERE d.dataset_id = $1 AND d.user_id = $2
-       LIMIT 1`,
+         d.observation_count,
+         d.slot_count,
+         d.issue_count
+        FROM datasets d
+        WHERE d.dataset_id = $1 AND d.user_id = $2
+        LIMIT 1`,
       [datasetId, userId],
     );
 
@@ -122,8 +150,9 @@ export class PostgresDatasetRepository implements IDatasetRepository {
         `INSERT INTO datasets (
            filename, file_hash, policy_version,
            checklist_format, checklist_version,
-           start_date, end_date, agent_count, user_id
-         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+           start_date, end_date, agent_count, user_id,
+           observation_count, slot_count, issue_count
+         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
          RETURNING dataset_id`,
         [
           input.filename,
@@ -135,6 +164,9 @@ export class PostgresDatasetRepository implements IDatasetRepository {
           input.checklist.endDate,
           input.checklist.agentCount,
           input.userId,
+          input.observations.length,
+          input.slots.length,
+          input.issues.length,
         ],
       );
 
@@ -143,13 +175,13 @@ export class PostgresDatasetRepository implements IDatasetRepository {
         throw new AppError("Failed to insert dataset", 500);
       }
 
-      // Batch 500 inserts for observations
+      // Batch inserts (1000 rows per round-trip) for observations
       await this.insertObservationsInBatches(client, datasetId, input.observations);
 
-      // Batch 500 inserts for slots (check_slots)
+      // Batch inserts for slots (check_slots)
       await this.insertSlotsInBatches(client, datasetId, input.slots);
 
-      // Batch 500 inserts for issues (import_issues)
+      // Batch inserts for issues (import_issues)
       await this.insertIssuesInBatches(client, datasetId, input.issues);
 
       await client.query("COMMIT");
@@ -180,14 +212,16 @@ export class PostgresDatasetRepository implements IDatasetRepository {
     for (let i = 0; i < observations.length; i += BATCH_SIZE) {
       const batch = observations.slice(i, i + BATCH_SIZE);
       const agentIds = batch.map((o) => o.agentId);
+      const services = batch.map((o) => o.service);
       const timestamps = batch.map((o) => o.timestamp);
       const latencies = batch.map((o) => o.latencyMs);
       const statuses = batch.map((o) => o.status);
+      const regions = batch.map((o) => (o as { region?: string | null }).region ?? null);
 
       await client.query(
-        `INSERT INTO observations (dataset_id, agent_id, timestamp, latency_ms, status)
-         SELECT $1, unnest($2::text[]), unnest($3::timestamptz[]), unnest($4::int[]), unnest($5::text[])`,
-        [datasetId, agentIds, timestamps, latencies, statuses],
+        `INSERT INTO observations (dataset_id, service, agent_id, timestamp, latency_ms, status, region)
+         SELECT $1, unnest($2::text[]), unnest($3::text[]), unnest($4::timestamptz[]), unnest($5::int[]), unnest($6::text[]), unnest($7::text[])`,
+        [datasetId, services, agentIds, timestamps, latencies, statuses, regions],
       );
     }
   }
@@ -199,6 +233,7 @@ export class PostgresDatasetRepository implements IDatasetRepository {
   ): Promise<void> {
     for (let i = 0; i < slots.length; i += BATCH_SIZE) {
       const batch = slots.slice(i, i + BATCH_SIZE);
+      const services = batch.map((s) => s.service);
       const keys = batch.map((s) => s.slotKey);
       const startTimes = batch.map((s) => s.startTime);
       const endTimes = batch.map((s) => s.endTime);
@@ -210,14 +245,14 @@ export class PostgresDatasetRepository implements IDatasetRepository {
 
       await client.query(
         `INSERT INTO slots (
-           dataset_id, slot_key, start_time, end_time, duration_seconds,
+           dataset_id, service, slot_key, start_time, end_time, duration_seconds,
            uptime_seconds, downtime_seconds, unknown_seconds, average_latency_ms
          )
-         SELECT $1, unnest($2::text[]), unnest($3::timestamptz[]), unnest($4::timestamptz[]),
-                unnest($5::int[]), unnest($6::double precision[]), unnest($7::double precision[]),
-                unnest($8::double precision[]), unnest($9::int[])
-         ON CONFLICT (dataset_id, slot_key) DO NOTHING`,
-        [datasetId, keys, startTimes, endTimes, durations, uptimes, downtimes, unknowns, latencies],
+         SELECT $1, unnest($2::text[]), unnest($3::text[]), unnest($4::timestamptz[]), unnest($5::timestamptz[]),
+                unnest($6::int[]), unnest($7::double precision[]), unnest($8::double precision[]),
+                unnest($9::double precision[]), unnest($10::int[])
+         ON CONFLICT (dataset_id, service, slot_key) DO NOTHING`,
+        [datasetId, services, keys, startTimes, endTimes, durations, uptimes, downtimes, unknowns, latencies],
       );
     }
   }

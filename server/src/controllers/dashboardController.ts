@@ -7,9 +7,18 @@ interface ReportingQuery {
   startDate: string;
   endDate: string;
   datasetId?: string | string[];
+  service?: string;
+  region?: string;
+  status?: string;
 }
 
 interface PaginatedQuery extends ReportingQuery {
+  page?: number;
+  pageSize?: number;
+}
+
+interface IssuesQuery {
+  datasetId?: string | string[];
   page?: number;
   pageSize?: number;
 }
@@ -28,6 +37,7 @@ export class DashboardController {
         req.user!.id,
         toArray(query.datasetId),
         { startDate: new Date(query.startDate), endDate: new Date(query.endDate) },
+        { service: query.service, region: query.region, status: query.status },
       );
       sendSuccess(res, {
         statusCode: 200,
@@ -52,6 +62,7 @@ export class DashboardController {
         { startDate: new Date(query.startDate), endDate: new Date(query.endDate) },
         query.page ?? 1,
         query.pageSize ?? 50,
+        { service: query.service, region: query.region, status: query.status },
       );
       sendSuccess(res, {
         statusCode: 200,
@@ -76,10 +87,34 @@ export class DashboardController {
         { startDate: new Date(query.startDate), endDate: new Date(query.endDate) },
         query.page ?? 1,
         query.pageSize ?? 50,
+        { service: query.service, region: query.region },
       );
       sendSuccess(res, {
         statusCode: 200,
         message: "Slots retrieved successfully",
+        data: result,
+      });
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  issues = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      const query = (req.validated?.query ?? req.query) as IssuesQuery;
+      const result = await this.reportingService.getIssues(
+        req.user!.id,
+        toArray(query.datasetId),
+        query.page ?? 1,
+        query.pageSize ?? 50,
+      );
+      sendSuccess(res, {
+        statusCode: 200,
+        message: "Data quality issues retrieved successfully",
         data: result,
       });
     } catch (err) {

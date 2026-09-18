@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { screen, waitFor } from '@testing-library/react'
+import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { DashboardPage } from '@/pages/dashboard/DashboardPage'
 import { renderWithProviders } from './render'
@@ -43,18 +43,25 @@ describe('DashboardPage', () => {
     const user = userEvent.setup()
     renderWithProviders(<DashboardPage />)
 
-    expect(screen.getByRole('heading', { name: /sla dashboard/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /csv ingest workspace/i })).toBeInTheDocument()
 
-    const select = await screen.findByLabelText('Dataset')
-    await waitFor(() =>
-      expect(screen.getByRole('option', { name: sampleDataset.filename })).toBeInTheDocument(),
-    )
+    // Inventory table is now the single dataset picker (duplicate dropdown removed).
+    const selectBtn = await screen.findByRole('button', { name: /select/i })
+    await user.click(selectBtn)
 
-    await user.selectOptions(select, sampleDataset.datasetId)
+    // Filename renders once in the dataset overview; diagnostics stays
+    // closed until the user opens it on demand.
+    expect(await screen.findAllByText(sampleDataset.filename, { selector: 'p' })).toHaveLength(1)
+    expect(screen.queryByRole('complementary', { name: /diagnostic panel/i })).not.toBeInTheDocument()
 
-    expect(await screen.findByText(sampleDataset.filename, { selector: 'p' })).toBeInTheDocument()
-    // Policy version renders in both the inventory table and dataset overview.
-    expect(screen.getAllByText(sampleDataset.policyVersion)).toHaveLength(2)
+    // Opening diagnostics reveals the same dataset (filename twice,
+    // policy version in inventory + overview + panel).
+    await user.click(screen.getByRole('button', { name: /open diagnostics panel/i }))
+    // Panel is code-split: allow time for the lazy chunk under load.
+    await screen.findByRole('complementary', { name: /diagnostic panel/i }, { timeout: 5000 })
+    expect(await screen.findAllByText(sampleDataset.filename, { selector: 'p' })).toHaveLength(2)
+    // Policy version renders in the inventory table, dataset overview and diagnostics panel.
+    expect(screen.getAllByText(sampleDataset.policyVersion)).toHaveLength(3)
     expect(window.location.search).toBe(`?dataset=${sampleDataset.datasetId}`)
   })
 
@@ -68,10 +75,8 @@ describe('DashboardPage', () => {
 
     renderWithProviders(<DashboardPage />)
 
-    // Both dataset consumers (inventory table + dataset picker) surface the
-    // shared list failure with distinct, recoverable error states.
+    // Single inventory table surfaces the list failure with a retry.
     expect(await screen.findByText('Could not load dataset inventory.', {}, { timeout: 3000 })).toBeInTheDocument()
-    expect(screen.getByText('Could not load datasets.')).toBeInTheDocument()
-    expect(screen.getAllByRole('button', { name: /retry/i })).toHaveLength(2)
+    expect(screen.getAllByRole('button', { name: /retry/i })).toHaveLength(1)
   })
 })

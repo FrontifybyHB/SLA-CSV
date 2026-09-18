@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./tokens.css";
 
 @theme {
   /* Colors - Base */
@@ -21,6 +22,24 @@
   --color-warning-soft: #fdf3e3;
   --color-success: #177245;
   --color-success-soft: #e5f5ec;
+
+  /* Colors - Engineering Overview (SLA_MONITOR // PROD-US-EAST) */
+  --color-canvas: #f8fafc;
+  --color-surface-card: #ffffff;
+  --color-surface-subtle: #f1f5f9;
+  --color-border-subtle: #e2e8f0;
+  --color-border-muted: #f1f5f9;
+  --color-accent: #2563eb;
+  --color-accent-hover: #1d4ed8;
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-muted: #94a3b8;
+  --color-emerald-status: #16a34a;
+  --color-emerald-bg: #ecfdf5;
+  --color-rose-status: #dc2626;
+  --color-rose-bg: #fef2f2;
+  --font-body: "Inter", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
 
   /* Colors - SLA Monitor */
   --color-sla-bg: #f8f9ff;
@@ -121,6 +140,50 @@
   --breakpoint-xl: 1280px;
   --breakpoint-2xl: 1600px;
   --breakpoint-3xl: 2200px;
+
+  /* Aliases: components use the short names (text-label-md, border-border,
+     text-success, …) while the palette above is sla-/unprefixed. Without
+     these, Tailwind silently emits no CSS and text/borders render unstyled. */
+  --color-sla-border: var(--color-border);
+  --color-sla-border-strong: var(--color-border-strong);
+  --color-sla-text: var(--color-text);
+  --color-sla-text-muted: var(--color-text-muted);
+  --color-sla-text-faint: var(--color-text-faint);
+  --color-sla-primary-soft: var(--color-primary-soft);
+  --color-sla-danger: var(--color-danger);
+  --color-sla-danger-soft: var(--color-danger-soft);
+  --color-sla-success: var(--color-success);
+  --color-sla-success-soft: var(--color-success-soft);
+  --color-sla-warning: var(--color-warning);
+  --color-sla-warning-soft: var(--color-warning-soft);
+
+  --font-size-label-sm: 0.6875rem;
+  --font-size-label-sm--line-height: 1rem;
+  --font-size-label-md: 0.8125rem;
+  --font-size-label-md--line-height: 1.25rem;
+  --font-size-body-sm: 0.75rem;
+  --font-size-body-sm--line-height: 1.125rem;
+  --font-size-body-md: 0.875rem;
+  --font-size-body-md--line-height: 1.375rem;
+  --font-size-body-lg: 1rem;
+  --font-size-body-lg--line-height: 1.5rem;
+  --font-size-headline-sm: 1rem;
+  --font-size-headline-sm--line-height: 1.5rem;
+  --font-size-headline-md: 1.25rem;
+  --font-size-headline-md--line-height: 1.75rem;
+  --font-size-headline-lg: 1.5rem;
+  --font-size-headline-lg--line-height: 2rem;
+  --font-size-headline-xl: 2.25rem;
+  --font-size-headline-xl--line-height: 2.75rem;
+}
+
+/* Legacy class names used across the app that Tailwind v4 does not ship. */
+@utility text-decoration-none {
+  text-decoration-line: none;
+}
+
+@utility overflow-wrap-anywhere {
+  overflow-wrap: anywhere;
 }
 
 @layer base {
@@ -143,6 +206,11 @@
     color: var(--color-text);
     background: var(--color-bg);
     min-height: 100vh;
+    /* Safety net: no page-level horizontal scroll on small screens.
+     * `clip` (unlike `hidden`) does not create a scroll container, so
+     * sticky headers keep working. Individual tables/cards still scroll
+     * internally via their own overflow-x-auto regions. */
+    overflow-x: clip;
   }
 
   h1, h2, h3, p {
@@ -268,6 +336,31 @@
   @keyframes ping {
     75%, 100% { transform: scale(2); opacity: 0; }
   }
-}
 
-@import "./tokens.css";
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Soft entrance for page sections — professional, subtle, motion-safe. */
+  .animate-fade-up {
+    animation: fade-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  ::selection {
+    background: rgb(29 78 216 / 0.16);
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    .animate-fade-up {
+      animation: none;
+    }
+  }
+}

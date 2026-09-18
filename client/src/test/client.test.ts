@@ -43,10 +43,13 @@ describe('api client', () => {
     const result = await api.upload('/datasets', file)
 
     const [url, init] = fetchMock.mock.calls[0]
-    expect(getPathFromUrl(url)).toBe('/api/v1/datasets')
+    // The server rejects uploads without a filename, so the client must
+    // transmit it both as a query param and as an x-filename header.
+    expect(getPathFromUrl(url)).toBe('/api/v1/datasets?filename=data.csv')
     expect(init.method).toBe('POST')
     expect(init.body).toBe(file)
     expect(init.headers.get('content-type')).toBe('text/csv')
+    expect(init.headers.get('x-filename')).toBe('data.csv')
     expect(init.signal).toBeInstanceOf(AbortSignal)
     expect(result).toEqual({ datasetId: 'ds-1' })
   })

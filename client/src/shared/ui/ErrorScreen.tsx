@@ -31,7 +31,7 @@ export function ErrorScreen({
           {statusCode ? `${statusCode} — ${title}` : title}
         </h1>
         <p className="text-body-md text-sla-secondary m-0 max-w-[44ch]">{message}</p>
-        {requestId && <p className="text-label-sm font-mono text-sla-on-surface-variant m-0">Request ID: {requestId}</p>}
+        {requestId && <p className="text-label-sm font-mono text-sla-on-surface-variant m-0 overflow-wrap-anywhere">Request ID: {requestId}</p>}
         {onRetry && (
           <div className="flex gap-3 mt-2">
             <Button variant="primary" onClick={onRetry}>{retryLabel}</Button>

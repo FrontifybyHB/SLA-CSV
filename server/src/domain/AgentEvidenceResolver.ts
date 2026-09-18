@@ -23,25 +23,29 @@ export class AgentEvidenceResolver {
 
   resolve(rows: NormalizedRow[]): AgentEvidenceResolutionResult {
     const issues: RowIssue[] = [];
-    const grouped = new Map<string, NormalizedRow[]>();
+    // Use a control character as delimiter so service names containing "|"
+    // cannot corrupt the grouping key.
+    const SEP = "";
+    const grouped = new Map<string, { service: string; agentId: string; slotKey: string; rows: NormalizedRow[] }>();
 
     for (const row of rows) {
       const slotStartMs = Math.floor(row.timestamp.getTime() / SLOT_DURATION_MS) * SLOT_DURATION_MS;
       const slotKey = new Date(slotStartMs).toISOString();
-      const groupKey = `${row.service}|${row.agentId}|${slotKey}`;
+      const groupKey = `${row.service}${SEP}${row.agentId}${SEP}${slotKey}`;
 
-      let list = grouped.get(groupKey);
-      if (!list) {
-        list = [];
-        grouped.set(groupKey, list);
+      let entry = grouped.get(groupKey);
+      if (!entry) {
+        entry = { service: row.service, agentId: row.agentId, slotKey, rows: [] };
+        grouped.set(groupKey, entry);
       }
-      list.push(row);
+      entry.rows.push(row);
     }
 
     const evidences: AgentSlotEvidence[] = [];
 
-    for (const [groupKey, groupRows] of grouped.entries()) {
-      const [service, agentId, slotKey] = groupKey.split("|");
+    for (const entry of grouped.values()) {
+      const { service, agentId, slotKey } = entry;
+      const groupRows = entry.rows;
       const slotStart = new Date(slotKey);
 
       if (groupRows.length === 1) {

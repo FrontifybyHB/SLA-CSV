@@ -15,7 +15,6 @@ import { QualityMetricsCalculator } from "../src/domain/QualityMetricsCalculator
 import { SlaCsvProcessor } from "../src/domain/SlaCsvProcessor.js";
 import { SlaDatasetImporter } from "../src/services/SlaDatasetImporter.js";
 import { PostgresDatasetRepository } from "../src/repositories/postgresDatasetRepository.js";
-import { ImportError } from "../src/errors/ImportError.js";
 import type { IDatasetRepository } from "../src/contracts/repository.interface.js";
 import type { DatasetSummary, SaveImportResult } from "../src/contracts/repository.js";
 import type { PreparedImport } from "../src/contracts/import.js";
@@ -77,20 +76,31 @@ test('2. an invalid status (e.g. "999") does not override a valid corroborating 
   assert.ok(invalidStatusIssue, "INVALID_HTTP_STATUS issue should be logged");
 });
 
-// 3. two agents with valid but conflicting status (UP vs DOWN) resolve to UNKNOWN
-test("3. two agents with valid but conflicting status (UP vs DOWN) resolve to UNKNOWN", () => {
+// 3. conflicting agent evidence resolves by majority vote (UP wins exact ties)
+test("3. conflicting agent evidence resolves by majority vote (UP wins exact ties)", () => {
   const processor = buildProcessor();
-  const csv = [
+  // Exact 1v1 tie -> UP with conflicting_evidence (UP > DOWN tiebreak)
+  const tied = processor.process(Buffer.from([
     "agent,timestamp,latency,status",
     "agent1,2026-09-17T10:00:00Z,100,up",
     "agent2,2026-09-17T10:00:00Z,120,down",
-  ].join("\n");
+  ].join("\n")));
+  const tiedSlot = tied.slots.find((s) => s.slotKey === "2026-09-17T10:00:00.000Z");
+  assert.ok(tiedSlot);
+  assert.equal(tiedSlot.status, "UP");
+  assert.equal(tiedSlot.reason, "conflicting_evidence");
 
-  const result = processor.process(Buffer.from(csv));
-  const slot = result.slots.find((s) => s.slotKey === "2026-09-17T10:00:00.000Z");
-  assert.ok(slot);
-  assert.equal(slot.status, "UNKNOWN");
-  assert.equal(slot.reason, "conflicting_evidence");
+  // 2v1 majority DOWN -> DOWN (conflict still flagged via reason)
+  const majority = processor.process(Buffer.from([
+    "agent,timestamp,latency,status",
+    "agent1,2026-09-17T10:00:00Z,100,up",
+    "agent2,2026-09-17T10:00:00Z,120,down",
+    "agent3,2026-09-17T10:00:00Z,130,down",
+  ].join("\n")));
+  const majoritySlot = majority.slots.find((s) => s.slotKey === "2026-09-17T10:00:00.000Z");
+  assert.ok(majoritySlot);
+  assert.equal(majoritySlot.status, "DOWN");
+  assert.equal(majoritySlot.reason, "conflicting_evidence");
 });
 
 // 4. same-agent complementary latency variants (one blank, one present) merge deterministically, keeping the present value
@@ -201,24 +211,21 @@ test("9. a timestamp with a timezone offset normalizes into the correct UTC slot
   assert.equal(result.observations[0].timestamp.toISOString(), "2026-09-17T10:05:00.000Z");
 });
 
-// 10. a malformed/ragged CSV row fails the whole file (strict parser, no partial import)
-test("10. a malformed/ragged CSV row fails the whole file (strict parser, no partial import)", () => {
+// 10. a malformed/ragged CSV row is quarantined as an issue; valid rows still import
+test("10. a malformed/ragged CSV row is quarantined as an issue; valid rows still import", () => {
   const processor = buildProcessor();
-  // Line 3 has an extra column (ragged)
+  // Line 3 has an extra column (ragged) -> skipped with a RAGGED_ROW issue
   const csv = [
     "agent,timestamp,latency,status",
     "agent1,2026-09-17T10:00:00Z,100,up",
     "agent2,2026-09-17T10:00:00Z,100,up,extra_garbage_column",
   ].join("\n");
 
-  assert.throws(
-    () => processor.process(Buffer.from(csv)),
-    (err: unknown) => {
-      assert.ok(err instanceof ImportError);
-      assert.equal(err.code, "MALFORMED_CSV_ROW");
-      return true;
-    },
-  );
+  const result = processor.process(Buffer.from(csv));
+  assert.equal(result.observations.length, 1, "Valid row must still be processed");
+  const ragged = result.issues.find((i) => i.code === "RAGGED_ROW");
+  assert.ok(ragged, "RAGGED_ROW issue should be recorded for line 3");
+  assert.equal(ragged.row, 3);
 });
 
 // 11. saveImport() only commits after every child batch insert succeeds
@@ -257,11 +264,12 @@ test("11. saveImport() only commits after every child batch insert succeeds", as
       agentCount: 1,
     },
     observations: [
-      { agentId: "agent1", timestamp: new Date(), latencyMs: 100, status: "up" },
+      { agentId: "agent1", service: "api", timestamp: new Date(), latencyMs: 100, status: "up" },
     ],
     slots: [
       {
         slotKey: "2026-09-17T10:00:00.000Z",
+        service: "api",
         startTime: new Date(),
         endTime: new Date(),
         durationSeconds: 900,
@@ -328,7 +336,7 @@ test("12. saveImport() rolls back AND releases the pool client on any child inse
       agentCount: 1,
     },
     observations: [
-      { agentId: "agent1", timestamp: new Date(), latencyMs: 100, status: "up" },
+      { agentId: "agent1", service: "api", timestamp: new Date(), latencyMs: 100, status: "up" },
     ],
     slots: [],
     issues: [],
@@ -361,6 +369,10 @@ test("13. re-importing identical bytes under the same policy_version returns reu
       return store.get(`${hash}:${policy}:${userId}`) ?? null;
     },
     listDatasets: async () => Array.from(store.values()),
+    listDatasetsPaginated: async (_userId: string, _page: number, _pageSize: number) => ({
+      datasets: Array.from(store.values()),
+      total: store.size,
+    }),
     findById: async (datasetId: string) => {
       return Array.from(store.values()).find((s) => s.datasetId === datasetId) ?? null;
     },

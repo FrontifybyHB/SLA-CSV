@@ -3,6 +3,7 @@ import express from "express";
 import type { DashboardController } from "../controllers/dashboardController.js";
 import type { AuthMiddleware } from "../middlewares/authMiddleware.js";
 import {
+  issuesQuerySchema,
   logsQuerySchema,
   slotsQuerySchema,
   statsQuerySchema,
@@ -34,6 +35,13 @@ export function createReportingRouter(
     auth.requireAuth(),
     validate(slotsQuerySchema, "query"),
     controller.slots,
+  );
+
+  router.get(
+    "/issues",
+    auth.requireAuth(),
+    validate(issuesQuerySchema, "query"),
+    controller.issues,
   );
 
   return router;

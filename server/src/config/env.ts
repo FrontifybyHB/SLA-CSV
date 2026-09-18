@@ -9,6 +9,17 @@ function required(name: string, value: string | undefined): string {
   return value;
 }
 
+function optional(name: string, value: string | undefined, fallback: string): string {
+  return value ?? fallback;
+}
+
+function parseCorsOrigins(value: string | undefined): string[] {
+  if (!value) {
+    return ["http://localhost:5173"];
+  }
+  return value.split(",").map((s) => s.trim()).filter(Boolean);
+}
+
 const env = {
   NODE_ENV: process.env.NODE_ENV ?? "development",
   PORT: Number(process.env.PORT ?? 3000),
@@ -16,9 +27,16 @@ const env = {
     "DATABASE_URL",
     process.env.DATABASE_URL ?? "postgres://postgres:postgres@localhost:5432/sla_csv"
   ),
-  CORS_ORIGIN: process.env.CORS_ORIGIN ?? "http://localhost:5173",
+  CORS_ORIGIN: parseCorsOrigins(process.env.CORS_ORIGIN),
   ACCESS_TOKEN_SECRET: required("ACCESS_TOKEN_SECRET", process.env.ACCESS_TOKEN_SECRET),
   REFRESH_TOKEN_SECRET: required("REFRESH_TOKEN_SECRET", process.env.REFRESH_TOKEN_SECRET),
+  // Pepper for HMAC-based refresh token hashing (defense against DB leak + offline brute-force)
+  // In production, must be set via env var. In development, use a default.
+  REFRESH_TOKEN_PEPPER: optional(
+    "REFRESH_TOKEN_PEPPER",
+    process.env.REFRESH_TOKEN_PEPPER,
+    "dev-pepper-change-in-production"
+  ),
 };
 
 export default env;

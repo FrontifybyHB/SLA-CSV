@@ -14,7 +14,13 @@ export interface IDatasetRepository {
     userId: string,
   ): Promise<DatasetSummary | null>;
 
-  listDatasets(userId: string): Promise<DatasetSummary[]>;
+  listDatasets(userId: string, page?: number, pageSize?: number): Promise<DatasetSummary[]>;
+
+  listDatasetsPaginated(
+    userId: string,
+    page: number,
+    pageSize: number,
+  ): Promise<{ datasets: DatasetSummary[]; total: number }>;
 
   findById(datasetId: string, userId: string): Promise<DatasetSummary | null>;
 

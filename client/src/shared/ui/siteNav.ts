@@ -14,20 +14,21 @@ export const SITE_NAV_LINKS = [
 
 /** Minimal nav for the login page (same component, fewer links). */
 export const AUTH_NAV_LINKS = [
-  { label: 'Home', href: '#top' },
-  { label: 'Dashboard', href: '#dashboard' },
+  { label: 'Home', href: '/' },
+  { label: 'Dashboard', href: '/dashboard' },
 ] as const satisfies readonly SiteNavLink[]
 
 export const HOME_FOOTER_LINKS = [
   { label: 'Features', href: '#features' },
   { label: 'How it works', href: '#how-it-works' },
   { label: 'API', href: '#api' },
-  { label: 'Dashboard', href: '#dashboard' },
+  { label: 'Engineering', href: '/engineering' },
+  { label: 'Dashboard', href: '/dashboard' },
 ] as const satisfies readonly SiteNavLink[]
 
 export const AUTH_FOOTER_LINKS = [
-  { label: 'Home', href: '#top' },
-  { label: 'Dashboard', href: '#dashboard' },
+  { label: 'Home', href: '/' },
+  { label: 'Dashboard', href: '/dashboard' },
 ] as const satisfies readonly SiteNavLink[]
 
 /**

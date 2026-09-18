@@ -86,6 +86,10 @@ class FakeRefreshTokenRepository implements IRefreshTokenRepository {
     return row;
   }
 
+  async findById(id: string): Promise<RefreshTokenRecord | null> {
+    return this.rows.get(id) ?? null;
+  }
+
   async revoke(id: string): Promise<void> {
     const row = this.rows.get(id);
     if (row && !row.revokedAt) {
@@ -257,35 +261,52 @@ test("4. refresh() with a valid token issues new tokens and revokes the old refr
   assert.equal(newRow.userId, session.user.id);
 });
 
-// Test 5: replaying an already-rotated token triggers reuse detection and revokes
-// every other active session.
-test("5. refresh() with an already-used token fails and revokes all other sessions", async () => {
+// Test 5: replaying an already-rotated token *within the grace window* is a benign
+// concurrent duplicate (two queries expiring at once, StrictMode remount, …) — it
+// rotates forward and keeps every session alive. Only a replay *after* the grace
+// window is treated as theft and revokes every other active session.
+test("5. refresh() with a concurrently-replayed token rotates forward; aged replay revokes all sessions", async () => {
   const { authService, tokenService, refreshTokens } = buildHarness();
   const firstSession = await authService.register("alice@example.com", "password123");
   const secondSession = await authService.login("alice@example.com", "password123");
 
   // Rotate the first token legitimately.
-  await authService.refresh(firstSession.refreshToken);
+  const rotated = await authService.refresh(firstSession.refreshToken);
 
-  // Replaying the now-rotated first token is suspected theft.
+  // Immediate replay = concurrent duplicate: must succeed, not nuke sessions.
+  const forwarded = await authService.refresh(firstSession.refreshToken);
+  assert.ok(forwarded.accessToken.length > 0);
+  assert.ok(forwarded.refreshToken.length > 0);
+
+  const second = await refreshTokens.findByHash(
+    tokenService.hashToken(secondSession.refreshToken),
+  );
+  assert.equal(second?.revokedAt, null, "Other active session must survive a grace-window replay");
+
+  // The newest token in the rotated family must still work.
+  const latest = await authService.refresh(forwarded.refreshToken);
+  assert.ok(latest.accessToken.length > 0);
+
+  // Age the original rotation past the grace window, then replay: theft path.
+  const original = await refreshTokens.findByHash(
+    tokenService.hashToken(firstSession.refreshToken),
+  );
+  assert.ok(original?.revokedAt);
+  original.revokedAt = new Date(Date.now() - 61_000);
+
   const err = await captureError(() =>
     authService.refresh(firstSession.refreshToken),
   );
   assert.ok(err instanceof AuthenticationError);
   assert.equal(err.statusCode, 401);
 
-  const first = await refreshTokens.findByHash(
-    tokenService.hashToken(firstSession.refreshToken),
-  );
-  const second = await refreshTokens.findByHash(
-    tokenService.hashToken(secondSession.refreshToken),
-  );
-  assert.ok(first?.revokedAt, "Replayed token must be revoked");
-  assert.ok(second?.revokedAt, "Other active session must be revoked");
-
   for (const row of await refreshTokens.allRows()) {
     assert.ok(row.revokedAt, `All rows must be revoked, found ${row.id} still active`);
   }
+
+  // Sanity: the pre-rotation pair from the legitimate refresh is unaffected by
+  // the test above only in that it was valid — replaced rows stay chained.
+  assert.ok(rotated.refreshToken.length > 0);
 });
 
 // Test 6: logout() revokes the refresh token server-side so refresh() later fails.

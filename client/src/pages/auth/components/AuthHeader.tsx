@@ -8,6 +8,7 @@ export const AuthHeader = memo(function AuthHeader() {
       links={AUTH_NAV_LINKS}
       activeFallback={null}
       containerClassName="auth-container"
+      brandHref="/"
       menuId="auth-mobile-menu"
       actions={
         <>
@@ -21,13 +22,13 @@ export const AuthHeader = memo(function AuthHeader() {
             </span>
             <span className="hidden md:inline text-label-sm text-sla-secondary whitespace-nowrap">| 99.998% SLA</span>
           </div>
-          <a className="hidden sm:block text-label-md font-mono text-sla-secondary text-decoration-none whitespace-nowrap transition-colors hover:text-sla-primary" href="#docs">
+          <a className="hidden sm:block text-label-md font-mono text-sla-secondary text-decoration-none whitespace-nowrap transition-colors hover:text-sla-primary" href="/#api">
             Docs
           </a>
         </>
       }
       mobileExtra={
-        <a href="#top" className="py-2.5 text-label-md font-mono text-sla-secondary border-b border-sla-outline-variant/30 hover:text-sla-on-surface transition-colors">
+        <a href="/" className="py-2.5 text-label-md font-mono text-sla-secondary border-b border-sla-outline-variant/30 hover:text-sla-on-surface transition-colors">
           Back to Home
         </a>
       }

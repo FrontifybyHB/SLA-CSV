@@ -1,5 +1,5 @@
-import type { DateRange, LogsResult, SlotsResult, StatsSummary } from "../contracts/reporting.js";
-import type { IReportingRepository } from "../contracts/reporting.interface.js";
+import type { DateRange, IssuesResult, LogsResult, SlotsResult, StatsSummary } from "../contracts/reporting.js";
+import type { IReportingRepository, ReportingFilters } from "../contracts/reporting.interface.js";
 import { AppError } from "../middlewares/appError.js";
 
 const MAX_RANGE_DAYS = 90;
@@ -7,9 +7,9 @@ const MAX_RANGE_DAYS = 90;
 export class ReportingService {
   constructor(private readonly repository: IReportingRepository) {}
 
-  async getStats(userId: string, datasetIds: string[], range: DateRange): Promise<StatsSummary> {
+  async getStats(userId: string, datasetIds: string[], range: DateRange, filters: ReportingFilters = {}): Promise<StatsSummary> {
     const resolved = this.resolveRange(range);
-    return this.repository.getStats(userId, datasetIds, resolved);
+    return this.repository.getStats(userId, datasetIds, resolved, filters);
   }
 
   async getLogs(
@@ -18,11 +18,12 @@ export class ReportingService {
     range: DateRange,
     page: number,
     pageSize: number,
+    filters: ReportingFilters = {},
   ): Promise<LogsResult> {
     const resolved = this.resolveRange(range);
     const safePage = Math.max(page, 1);
     const safePageSize = Math.min(Math.max(pageSize, 1), 500);
-    return this.repository.getLogs(userId, datasetIds, resolved, safePage, safePageSize);
+    return this.repository.getLogs(userId, datasetIds, resolved, safePage, safePageSize, filters);
   }
 
   async getSlots(
@@ -31,11 +32,23 @@ export class ReportingService {
     range: DateRange,
     page: number,
     pageSize: number,
+    filters: ReportingFilters = {},
   ): Promise<SlotsResult> {
     const resolved = this.resolveRange(range);
     const safePage = Math.max(page, 1);
     const safePageSize = Math.min(Math.max(pageSize, 1), 500);
-    return this.repository.getSlots(userId, datasetIds, resolved, safePage, safePageSize);
+    return this.repository.getSlots(userId, datasetIds, resolved, safePage, safePageSize, filters);
+  }
+
+  async getIssues(
+    userId: string,
+    datasetIds: string[],
+    page: number,
+    pageSize: number,
+  ): Promise<IssuesResult> {
+    const safePage = Math.max(page, 1);
+    const safePageSize = Math.min(Math.max(pageSize, 1), 500);
+    return this.repository.getIssues(userId, datasetIds, safePage, safePageSize);
   }
 
   private resolveRange(range: DateRange): DateRange {

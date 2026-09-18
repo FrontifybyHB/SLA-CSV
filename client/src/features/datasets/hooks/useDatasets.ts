@@ -6,6 +6,7 @@ export function useDatasets() {
   return useQuery({
     queryKey: datasetKeys.list(),
     queryFn: ({ signal }) => listDatasets(signal),
-    staleTime: 30_000,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   })
 }

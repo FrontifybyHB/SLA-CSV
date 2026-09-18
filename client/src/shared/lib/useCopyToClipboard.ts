@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 /**
  * Copy-to-clipboard with legacy fallback and transient "copied" state.
  * Consolidates the identical logic previously duplicated in
- * EmptyStatePreview and ApiExampleSection.
+ * DashboardTopNav and ApiExampleSection.
  */
 export function useCopyToClipboard(resetAfterMs = 2000): {
   copied: boolean

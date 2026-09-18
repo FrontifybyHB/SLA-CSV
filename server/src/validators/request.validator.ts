@@ -1,6 +1,6 @@
 import Joi from "joi";
 
-const FILENAME_PATTERN = /^[a-zA-Z0-9._-]+\.(csv)$/i;
+const FILENAME_PATTERN = /^[a-zA-Z0-9._\- ]+\.(csv)$/i;
 
 export const uploadRequestSchema = Joi.object({
   filename: Joi.string()
@@ -9,7 +9,7 @@ export const uploadRequestSchema = Joi.object({
     .required()
     .messages({
       "string.pattern.base":
-        "Filename must end in .csv and contain only letters, numbers, dots, dashes, or underscores",
+        "Filename must end in .csv and contain only letters, numbers, spaces, dots, dashes, or underscores",
       "any.required": "A filename is required (use ?filename= or x-filename header)",
     }),
   contentType: Joi.string()
@@ -42,6 +42,9 @@ export const statsQuerySchema = Joi.object({
     Joi.string().uuid(),
     Joi.array().items(Joi.string().uuid()),
   ).optional(),
+  service: Joi.string().trim().max(255).optional(),
+  region: Joi.string().trim().max(255).optional(),
+  status: Joi.string().valid("up", "down", "unknown", "UP", "DOWN", "UNKNOWN").optional(),
 }).messages({
   "date.iso": "Dates must be ISO 8601 (e.g. 2026-09-17)",
   "any.required": "startDate and endDate query parameters are required",
@@ -53,3 +56,12 @@ export const logsQuerySchema = statsQuerySchema.keys({
 });
 
 export const slotsQuerySchema = logsQuerySchema;
+
+export const issuesQuerySchema = Joi.object({
+  datasetId: Joi.alternatives().try(
+    Joi.string().uuid(),
+    Joi.array().items(Joi.string().uuid()),
+  ).optional(),
+  page: Joi.number().integer().min(1).default(1),
+  pageSize: Joi.number().integer().min(1).max(500).default(50),
+});

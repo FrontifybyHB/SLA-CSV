@@ -15,7 +15,7 @@ interface KernelRequest extends RequestControl {
   rawBody?: BodyInit
 }
 
-const AUTH_BASE = '/api/v1/auth'
+const AUTH_BASE = `${(import.meta.env.VITE_API_BASE ?? '/api/v1').replace(/\/+$/, '')}/auth`
 const REFRESH_ENDPOINT = `${AUTH_BASE}/refresh`
 const EXPIRED_TOKEN_CODE = 'ACCESS_TOKEN_EXPIRED'
 
@@ -39,10 +39,18 @@ async function tryRefreshOnce(): Promise<void> {
   isRefreshing = true
   refreshPromise = (async () => {
     try {
-      await fetch(REFRESH_ENDPOINT, {
+      // A failed refresh (expired refresh token, network blip) must reject:
+      // previously the response was ignored, so callers retried the original
+      // request with a still-expired cookie, surfaced a confusing 401, and
+      // only the *next* manual call succeeded. Now the refresh error itself
+      // propagates and no pointless retry happens.
+      const response = await fetch(REFRESH_ENDPOINT, {
         method: 'POST',
         credentials: 'include',
       })
+      if (!response.ok) {
+        throw await toHttpError(response)
+      }
     } finally {
       isRefreshing = false
       refreshPromise = null

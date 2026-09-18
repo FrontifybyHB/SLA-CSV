@@ -34,11 +34,19 @@ export const api: ApiClient = {
     })
   },
   upload(path, file, control) {
+    // The server's file-upload guard requires a filename (query ?filename=
+    // or x-filename header). Without it every upload is rejected with a 400
+    // "A filename is required" — the first-call error users were seeing.
+    const separator = path.includes('?') ? '&' : '?'
     return request({
       method: 'POST',
-      url: `${apiBase}${path}`,
+      url: `${apiBase}${path}${separator}filename=${encodeURIComponent(file.name)}`,
       rawBody: file,
-      headers: { 'content-type': 'text/csv', ...control?.headers },
+      headers: {
+        'content-type': 'text/csv',
+        'x-filename': file.name,
+        ...control?.headers,
+      },
       timeoutMs: control?.timeoutMs ?? DEFAULT_UPLOAD_TIMEOUT_MS,
       signal: control?.signal,
     })

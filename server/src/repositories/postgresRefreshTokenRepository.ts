@@ -70,6 +70,18 @@ export class PostgresRefreshTokenRepository implements IRefreshTokenRepository {
     return row ? rowToRecord(row) : null;
   }
 
+  async findById(id: string): Promise<RefreshTokenRecord | null> {
+    const result = await this.pool.query<RefreshTokenRow>(
+      `SELECT ${SELECT_COLUMNS}
+       FROM refresh_tokens
+       WHERE id = $1
+       LIMIT 1`,
+      [id],
+    );
+    const row = result.rows[0];
+    return row ? rowToRecord(row) : null;
+  }
+
   async revoke(id: string): Promise<void> {
     await this.pool.query(
       `UPDATE refresh_tokens

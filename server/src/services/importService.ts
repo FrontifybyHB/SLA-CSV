@@ -5,6 +5,7 @@ import type {
 import type { DatasetSummary } from "../contracts/repository.js";
 import type { IDatasetRepository } from "../contracts/repository.interface.js";
 import { SlaDatasetImporter } from "./SlaDatasetImporter.js";
+import logger from "../middlewares/logger.js";
 
 export interface ChecklistMetadata {
   format: string;
@@ -20,6 +21,9 @@ export class ImportService {
   ) {}
 
   async execute(input: ImportInput, userId: string): Promise<ImportResult> {
+    const startTime = process.hrtime.bigint();
+    const fileSizeKb = Math.round(input.bytes.length / 1024);
+
     if (this.importer) {
       const res = await this.importer.importDataset({
         bytes: input.bytes,
@@ -28,6 +32,20 @@ export class ImportService {
         userId,
         checklistFormat: this.checklist.format,
         checklistVersion: this.checklist.version,
+      });
+
+      const elapsedMs = Number(process.hrtime.bigint() - startTime) / 1_000_000;
+      logger.info("CSV import completed", {
+        userId,
+        filename: input.filename,
+        fileSizeKb,
+        datasetId: res.datasetId,
+        reused: res.reused,
+        observationCount: res.observationCount,
+        slotCount: res.slotCount,
+        issueCount: res.issueCount,
+        processingTimeMs: res.metrics?.processingTimeMs ?? 0,
+        totalTimeMs: Math.round(elapsedMs),
       });
 
       if (res.reused) {
@@ -44,10 +62,13 @@ export class ImportService {
         observationCount: res.observationCount,
         slotCount: res.slotCount,
         issueCount: res.issueCount,
+        invalidRows: res.metrics?.invalidRows ?? 0,
+        duplicateRows: res.metrics?.duplicateRows ?? 0,
         fileHash: res.fileHash,
         policyVersion: res.policyVersion,
-        startDate: new Date(),
-        endDate: new Date(),
+        startDate: res.startDate ?? new Date(),
+        endDate: res.endDate ?? new Date(),
+        metrics: res.metrics,
       };
     }
 
@@ -72,6 +93,8 @@ export class ImportService {
       observationCount: 0,
       slotCount: 0,
       issueCount: 0,
+      invalidRows: 0,
+      duplicateRows: 0,
       fileHash,
       policyVersion: this.checklist.policyVersion,
       startDate: new Date(),

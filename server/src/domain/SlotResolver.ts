@@ -62,24 +62,25 @@ export class SlotResolver {
       };
     }
 
-    const hasUp = votingEvidences.some((e) => e.status === "UP");
-    const hasDown = votingEvidences.some((e) => e.status === "DOWN");
+    const upVotes = votingEvidences.filter((e) => e.status === "UP").length;
+    const downVotes = votingEvidences.filter((e) => e.status === "DOWN").length;
+    const contested = upVotes > 0 && downVotes > 0;
 
-    if (hasUp && hasDown) {
-      // Valid evidence disagrees -> UNKNOWN, reason = "conflicting_evidence"
-      return {
-        service,
-        slotKey,
-        startTime: slotStart,
-        endTime: slotEnd,
-        durationSeconds,
-        status: "UNKNOWN",
-        reason: "conflicting_evidence",
-        medianLatencyMs,
-      };
-    }
-
-    if (hasUp) {
+    // Majority vote with UP > DOWN tiebreak (per product spec).
+    if (upVotes >= downVotes && upVotes > 0) {
+      if (upVotes === downVotes) {
+        // Exact tie resolves UP but stays visible as conflicting evidence.
+        return {
+          service,
+          slotKey,
+          startTime: slotStart,
+          endTime: slotEnd,
+          durationSeconds,
+          status: "UP",
+          reason: "conflicting_evidence",
+          medianLatencyMs,
+        };
+      }
       return {
         service,
         slotKey,
@@ -87,6 +88,7 @@ export class SlotResolver {
         endTime: slotEnd,
         durationSeconds,
         status: "UP",
+        ...(contested ? { reason: "conflicting_evidence" } : {}),
         medianLatencyMs,
       };
     }
@@ -98,6 +100,7 @@ export class SlotResolver {
       endTime: slotEnd,
       durationSeconds,
       status: "DOWN",
+      ...(contested ? { reason: "conflicting_evidence" } : {}),
       medianLatencyMs,
     };
   }

@@ -52,13 +52,14 @@ export class StatusClassifier {
       return { status: "UNKNOWN_EVIDENCE" };
     }
 
-    // Check if numeric HTTP code
+    // Check if numeric HTTP code.
+    // Spec: 2xx => UP, 3xx-5xx => DOWN, anything else => UNKNOWN.
     if (/^\d+$/.test(trimmed)) {
       const code = Number.parseInt(trimmed, 10);
-      if (code >= 200 && code <= 399) {
+      if (code >= 200 && code <= 299) {
         return { status: "UP" };
       }
-      if (code >= 400 && code <= 599) {
+      if (code >= 300 && code <= 599) {
         return { status: "DOWN" };
       }
       // Outside standard HTTP status range (e.g. 999, 12, 700)

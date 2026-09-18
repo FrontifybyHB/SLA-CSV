@@ -23,6 +23,7 @@ export interface QualityMetrics {
   observedSlotsTotal: number;
   missingSlotsTotal: number;
   services: Record<string, ServiceQualityMetrics>;
+  processingTimeMs?: number;
 }
 
 export class QualityMetricsCalculator {

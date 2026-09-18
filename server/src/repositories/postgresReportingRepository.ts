@@ -1,7 +1,7 @@
 import type { Pool } from "pg";
 
-import type { DateRange, LogsResult, ObservationLog, SlotsResult, SlotRecordRow, StatsSummary } from "../contracts/reporting.js";
-import type { IReportingRepository } from "../contracts/reporting.interface.js";
+import type { DateRange, IssuesResult, LogsResult, ObservationLog, SlotsResult, SlotRecordRow, StatsSummary } from "../contracts/reporting.js";
+import type { IReportingRepository, ReportingFilters } from "../contracts/reporting.interface.js";
 
 interface StatsRow {
   totalSlots: number;
@@ -18,14 +18,17 @@ interface StatsRow {
 interface LogRow {
   _row_number: number;
   dataset_id: string;
+  service: string;
   agent_id: string;
   timestamp: Date;
   latency_ms: number | null;
   status: string;
+  region: string | null;
 }
 
 interface SlotRow {
   dataset_id: string;
+  service: string;
   slot_key: string;
   start_time: Date;
   end_time: Date;
@@ -35,6 +38,14 @@ interface SlotRow {
   unknown_seconds: number;
   average_latency_ms: number | null;
   status: string;
+}
+
+interface IssueRow {
+  id: number;
+  dataset_id: string;
+  row_number: number;
+  field: string;
+  message: string;
 }
 
 interface CountRow {
@@ -53,8 +64,9 @@ export class PostgresReportingRepository implements IReportingRepository {
     userId: string,
     datasetIds: string[],
     range: DateRange,
+    filters: ReportingFilters = {},
   ): Promise<StatsSummary> {
-    const { where, params } = this.buildFilter(userId, datasetIds, range, "start_time", "end_time");
+    const { where, params } = this.buildFilter(userId, datasetIds, range, "start_time", "end_time", filters);
 
     const result = await this.pool.query<StatsRow>(
       `SELECT
@@ -111,16 +123,17 @@ export class PostgresReportingRepository implements IReportingRepository {
     range: DateRange,
     page: number,
     pageSize: number,
+    filters: ReportingFilters = {},
   ): Promise<LogsResult> {
     const offset = (page - 1) * pageSize;
-    const { where, params } = this.buildFilter(userId, datasetIds, range, "timestamp", "timestamp");
+    const { where, params } = this.buildFilter(userId, datasetIds, range, "timestamp", "timestamp", filters);
     const limitPlaceholder = params.length + 1;
     const offsetPlaceholder = params.length + 2;
 
     const [rows, countResult] = await Promise.all([
       this.pool.query<LogRow>(
         `SELECT row_number() OVER (ORDER BY timestamp DESC, agent_id ASC)::int AS _row_number,
-                dataset_id, agent_id, timestamp, latency_ms, status
+                dataset_id, service, agent_id, timestamp, latency_ms, status, region
          FROM observations
          WHERE ${where}
          ORDER BY timestamp DESC, agent_id ASC
@@ -139,10 +152,12 @@ export class PostgresReportingRepository implements IReportingRepository {
       observations: rows.rows.map((r): ObservationLog => ({
         row: r._row_number,
         datasetId: r.dataset_id,
+        service: r.service,
         agentId: r.agent_id,
         timestamp: r.timestamp,
         latencyMs: r.latency_ms,
         status: r.status,
+        region: r.region,
       })),
       total: countResult.rows[0]?.count ?? 0,
       page,
@@ -156,15 +171,16 @@ export class PostgresReportingRepository implements IReportingRepository {
     range: DateRange,
     page: number,
     pageSize: number,
+    filters: ReportingFilters = {},
   ): Promise<SlotsResult> {
     const offset = (page - 1) * pageSize;
-    const { where, params } = this.buildFilter(userId, datasetIds, range, "start_time", "end_time");
+    const { where, params } = this.buildFilter(userId, datasetIds, range, "start_time", "end_time", filters);
     const limitPlaceholder = params.length + 1;
     const offsetPlaceholder = params.length + 2;
 
     const [rows, countResult] = await Promise.all([
       this.pool.query<SlotRow>(
-        `SELECT dataset_id, slot_key, start_time, end_time, duration_seconds,
+        `SELECT dataset_id, service, slot_key, start_time, end_time, duration_seconds,
                 uptime_seconds, downtime_seconds, unknown_seconds,
                 average_latency_ms,
                 CASE
@@ -191,6 +207,7 @@ export class PostgresReportingRepository implements IReportingRepository {
     return {
       slots: rows.rows.map((r): SlotRecordRow => ({
         datasetId: r.dataset_id,
+        service: r.service,
         slotKey: r.slot_key,
         startTime: r.start_time,
         endTime: r.end_time,
@@ -209,12 +226,61 @@ export class PostgresReportingRepository implements IReportingRepository {
     };
   }
 
+  async getIssues(
+    userId: string,
+    datasetIds: string[],
+    page: number,
+    pageSize: number,
+  ): Promise<IssuesResult> {
+    const offset = (page - 1) * pageSize;
+    const parts = [`dataset_id IN (SELECT dataset_id FROM datasets WHERE user_id = $1)`];
+    const params: unknown[] = [userId];
+    if (datasetIds.length > 0) {
+      params.push(datasetIds);
+      parts.push(`dataset_id = ANY($${params.length}::uuid[])`);
+    }
+    const where = parts.join(" AND ");
+    const limitPlaceholder = params.length + 1;
+    const offsetPlaceholder = params.length + 2;
+
+    const [rows, countResult] = await Promise.all([
+      this.pool.query<IssueRow>(
+        `SELECT id, dataset_id, row_number, field, message
+         FROM data_quality_issues
+         WHERE ${where}
+         ORDER BY row_number ASC, id ASC
+         LIMIT $${limitPlaceholder} OFFSET $${offsetPlaceholder}`,
+        [...params, pageSize, offset],
+      ),
+      this.pool.query<CountRow>(
+        `SELECT count(*)::int AS count
+         FROM data_quality_issues
+         WHERE ${where}`,
+        params,
+      ),
+    ]);
+
+    return {
+      issues: rows.rows.map((r) => ({
+        id: r.id,
+        datasetId: r.dataset_id,
+        rowNumber: r.row_number,
+        field: r.field,
+        message: r.message,
+      })),
+      total: countResult.rows[0]?.count ?? 0,
+      page,
+      pageSize,
+    };
+  }
+
   private buildFilter(
     userId: string,
     datasetIds: string[],
     range: DateRange,
     fromColumn: string,
     toColumn: string,
+    filters: ReportingFilters = {},
   ): Filter {
     // Always scoped to the requesting user at the query level; a dataset owned by
     // someone else is invisible even if its id is supplied.
@@ -226,6 +292,23 @@ export class PostgresReportingRepository implements IReportingRepository {
     if (datasetIds.length > 0) {
       params.push(datasetIds);
       parts.push(`dataset_id = ANY($${params.length}::uuid[])`);
+    }
+
+    if (filters.service) {
+      params.push(filters.service);
+      parts.push(`service = $${params.length}`);
+    }
+
+    // `region` only exists on observations; slots have no region column, so
+    // the filter is applied only when the queried table supports it.
+    if (filters.region && (fromColumn === "timestamp" || toColumn === "timestamp")) {
+      params.push(filters.region);
+      parts.push(`region = $${params.length}`);
+    }
+
+    if (filters.status && (fromColumn === "timestamp" || toColumn === "timestamp")) {
+      params.push(filters.status.toLowerCase());
+      parts.push(`status = $${params.length}`);
     }
 
     params.push(range.startDate, range.endDate);

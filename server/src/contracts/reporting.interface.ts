@@ -1,10 +1,17 @@
-import type { DateRange, LogsResult, SlotsResult, StatsSummary } from "../contracts/reporting.js";
+import type { DateRange, IssuesResult, LogsResult, SlotsResult, StatsSummary } from "../contracts/reporting.js";
+
+export interface ReportingFilters {
+  service?: string;
+  region?: string;
+  status?: string;
+}
 
 export interface IReportingRepository {
   getStats(
     userId: string,
     datasetIds: string[],
     range: DateRange,
+    filters?: ReportingFilters,
   ): Promise<StatsSummary>;
 
   getLogs(
@@ -13,6 +20,7 @@ export interface IReportingRepository {
     range: DateRange,
     page: number,
     pageSize: number,
+    filters?: ReportingFilters,
   ): Promise<LogsResult>;
 
   getSlots(
@@ -21,5 +29,13 @@ export interface IReportingRepository {
     range: DateRange,
     page: number,
     pageSize: number,
+    filters?: ReportingFilters,
   ): Promise<SlotsResult>;
+
+  getIssues(
+    userId: string,
+    datasetIds: string[],
+    page: number,
+    pageSize: number,
+  ): Promise<IssuesResult>;
 }

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { TopNav } from '@/pages/home/TopNav'
+import { TopNav } from '@/shared/ui/TopNav'
 import { AuthHeader } from '@/pages/auth/components/AuthHeader'
 
 afterEach(() => {
@@ -54,7 +54,7 @@ describe('AuthHeader', () => {
   it('reuses the same navbar with login links, status and docs', () => {
     render(<AuthHeader />)
 
-    expect(screen.getByRole('link', { name: 'SLA Monitor' })).toHaveAttribute('href', '#top')
+    expect(screen.getByRole('link', { name: 'SLA Monitor' })).toHaveAttribute('href', '/')
     expect(screen.getByRole('navigation', { name: 'Primary' })).toHaveTextContent('Home')
     expect(screen.getByText(/all systems operational/i)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Docs' })).toBeInTheDocument()

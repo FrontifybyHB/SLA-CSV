@@ -71,6 +71,7 @@ function preparedImport(userId: string, fileHash: string, filename: string): Pre
     observations: [
       {
         agentId: "agent1",
+        service: "api",
         timestamp: new Date("2026-09-17T10:00:00.000Z"),
         latencyMs: 100,
         status: "up",
@@ -79,6 +80,7 @@ function preparedImport(userId: string, fileHash: string, filename: string): Pre
     slots: [
       {
         slotKey: "2026-09-17T10:00:00.000Z",
+        service: "api",
         startTime: new Date("2026-09-17T10:00:00.000Z"),
         endTime: new Date("2026-09-17T10:15:00.000Z"),
         durationSeconds: 900,

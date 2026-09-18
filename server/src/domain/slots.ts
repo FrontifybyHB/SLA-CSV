@@ -68,9 +68,11 @@ function mergeObservation(a: ParsedObservation, b: ParsedObservation): ParsedObs
   const latencies = [a.latencyMs, b.latencyMs].filter((v): v is number => v !== null);
   return {
     agentId: a.agentId,
+    service: a.service,
     timestamp: a.timestamp < b.timestamp ? a.timestamp : b.timestamp,
     latencyMs: latencies.length > 0 ? avg(latencies) : null,
     status,
+    region: a.region ?? b.region ?? null,
   };
 }
 
@@ -195,6 +197,7 @@ export function resolveCheckSlot(
   }
   return {
     slotKey: analysis.slotKey,
+    service: "default",
     startTime: prepared.startTime,
     endTime: prepared.endTime,
     durationSeconds: prepared.durationSeconds,

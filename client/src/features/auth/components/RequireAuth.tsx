@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Navigate } from 'react-router-dom'
 import { ErrorState } from '@/shared/ui/ErrorState'
 import { Spinner } from '@/shared/ui/Spinner'
 import { getErrorMessage, isApiError } from '@/shared/api/api-error'
@@ -19,7 +19,6 @@ interface RequireAuthProps {
  */
 export function RequireAuth({ children }: RequireAuthProps) {
   const session = useSession()
-  const navigate = useNavigate()
 
   if (session.isPending) {
     return (
@@ -32,8 +31,7 @@ export function RequireAuth({ children }: RequireAuthProps) {
   if (session.isError) {
     const { error } = session
     if (isApiError(error) && error.status === 401) {
-      navigate('/login', { replace: true })
-      return null
+      return <Navigate to="/login" replace />
     }
     return (
       <div style={{ maxWidth: 560, margin: '3rem auto', padding: '0 1rem' }}>

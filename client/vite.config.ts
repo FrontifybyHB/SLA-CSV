@@ -20,6 +20,41 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    cssCodeSplit: true,
+    modulePreload: {
+      polyfill: false,
+    },
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+          query: ['@tanstack/react-query'],
+          ui: ['react-icons'],
+        },
+        chunkFileNames: 'assets/js/[name]-[hash].js',
+        entryFileNames: 'assets/js/[name]-[hash].js',
+        assetFileNames: (assetInfo) => {
+          const name = assetInfo.name ?? ''
+          const info = name.split('.')
+          const ext = info[info.length - 1]
+          if (/\.(png|jpe?g|gif|svg|webp|avif|ico)$/.test(name)) {
+            return `assets/images/[name]-[hash].${ext}`
+          }
+          if (/\.(woff2?|ttf|eot)$/.test(name)) {
+            return `assets/fonts/[name]-[hash].${ext}`
+          }
+          if (/\.css$/.test(name)) {
+            return `assets/css/[name]-[hash].${ext}`
+          }
+          return `assets/[name]-[hash].${ext}`
+        },
+      },
+    },
+    minify: 'esbuild',
+    target: 'es2022',
+    sourcemap: true,
+  },
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],

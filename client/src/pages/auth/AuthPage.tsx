@@ -1,6 +1,7 @@
 import { Suspense, lazy } from 'react'
 import { AuthCard } from './components/AuthCard'
 import { AppFooter } from '@/shared/ui/AppFooter'
+import { GraphBackground } from '@/shared/ui/GraphBackground'
 import { Skeleton } from '@/shared/ui/Skeleton'
 import { AUTH_FOOTER_LINKS } from '@/shared/ui/siteNav'
 import { AuthHeader } from './components/AuthHeader'
@@ -21,8 +22,9 @@ export function AuthPage() {
 
       <AuthHeader />
 
-      <main id="auth-main" className="flex-1 flex items-center justify-center px-4 py-8 sm:px-6 sm:py-10 md:px-8 md:py-12 lg:px-12 lg:py-12">
-        <div className="auth-container w-full max-w-[1180px] mx-auto grid grid-cols-1 gap-8 lg:grid-cols-12 lg:gap-10 items-start">
+      <main id="auth-main" className="relative flex-1 flex items-center justify-center px-4 py-8 sm:px-6 sm:py-10 md:px-8 md:py-12 lg:px-12 lg:py-12">
+        <GraphBackground gridSize={22} backgroundColor="transparent" fade="bottom" fadeColor="#f8f9ff" />
+        <div className="relative auth-container w-full max-w-[1180px] mx-auto grid grid-cols-1 gap-8 lg:grid-cols-12 lg:gap-10 items-start">
           <Suspense
             fallback={
               <div className="flex flex-col justify-between gap-6 min-w-0 lg:col-span-5" aria-label="Loading highlights">

@@ -1,4 +1,5 @@
-import { memo, useCallback, useState } from 'react'
+import { memo, useCallback, useEffect, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { Icon } from '@/shared/ui/Icon'
 import { SignInForm } from './SignInForm'
 import { RegisterForm } from './RegisterForm'
@@ -6,7 +7,14 @@ import { RegisterForm } from './RegisterForm'
 type AuthTab = 'login' | 'register'
 
 export const AuthCard = memo(function AuthCard() {
-  const [tab, setTab] = useState<AuthTab>('login')
+  const { pathname } = useLocation()
+  const [tab, setTab] = useState<AuthTab>(() =>
+    pathname === '/register' ? 'register' : 'login',
+  )
+
+  useEffect(() => {
+    setTab(pathname === '/register' ? 'register' : 'login')
+  }, [pathname])
 
   const handleTabChange = useCallback((next: AuthTab) => setTab(next), [])
   const isLogin = tab === 'login'

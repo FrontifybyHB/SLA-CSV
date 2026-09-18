@@ -22,10 +22,27 @@ export interface StatsSummary {
 export interface ObservationLog {
   row: number;
   datasetId: string;
+  service: string;
   agentId: string;
   timestamp: Date;
   latencyMs: number | null;
   status: string;
+  region: string | null;
+}
+
+export interface IssueRecord {
+  id: number;
+  datasetId: string;
+  rowNumber: number;
+  field: string;
+  message: string;
+}
+
+export interface IssuesResult {
+  issues: IssueRecord[];
+  total: number;
+  page: number;
+  pageSize: number;
 }
 
 export interface LogsResult {
@@ -37,6 +54,7 @@ export interface LogsResult {
 
 export interface SlotRecordRow {
   datasetId: string;
+  service: string;
   slotKey: string;
   startTime: Date;
   endTime: Date;

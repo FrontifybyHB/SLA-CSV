@@ -4,6 +4,7 @@ import { Field } from '@/shared/ui/Field'
 import { Input } from '@/shared/ui/Input'
 import { Button } from '@/shared/ui/Button'
 import { ErrorState } from '@/shared/ui/ErrorState'
+import { getErrorMessage, isApiError } from '@/shared/api/api-error'
 import { validateEmail } from '@/shared/lib/validation'
 import { PasswordField } from './PasswordField'
 import { useLogin } from '@/features/auth/hooks/useAuth'
@@ -25,6 +26,7 @@ export function SignInForm({ onSwitchToRegister }: { onSwitchToRegister: () => v
 
   const validatePassword = useCallback((value: string): string | undefined => {
     if (!value) return 'Password is required'
+    if (value.length < 8) return 'Password must be at least 8 characters'
     return undefined
   }, [])
 
@@ -63,8 +65,14 @@ export function SignInForm({ onSwitchToRegister }: { onSwitchToRegister: () => v
       try {
         await loginMutation.mutateAsync({ email, password })
         navigate('/dashboard', { replace: true })
-      } catch {
-        setServerError('Invalid email or password')
+      } catch (error) {
+        // 401 = wrong credentials; anything else (network, server, rate
+        // limit) surfaces verbatim so the failure is diagnosable.
+        setServerError(
+          isApiError(error) && error.status === 401
+            ? 'Invalid email or password'
+            : getErrorMessage(error, 'Sign in failed. Please try again.'),
+        )
       }
     },
     [email, password, loginMutation, navigate, validatePassword]
@@ -74,7 +82,7 @@ export function SignInForm({ onSwitchToRegister }: { onSwitchToRegister: () => v
   const passwordError = touched.password ? errors.password : undefined
 
   return (
-    <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+    <form className="flex flex-col gap-4" noValidate onSubmit={handleSubmit}>
       {serverError && (
         <ErrorState title="Sign in failed" message={serverError} />
       )}

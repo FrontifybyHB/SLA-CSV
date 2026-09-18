@@ -4,6 +4,7 @@ import { Field } from '@/shared/ui/Field'
 import { Input } from '@/shared/ui/Input'
 import { Button } from '@/shared/ui/Button'
 import { ErrorState } from '@/shared/ui/ErrorState'
+import { getErrorMessage } from '@/shared/api/api-error'
 import { validateEmail } from '@/shared/lib/validation'
 import { PasswordField } from './PasswordField'
 import { useRegister } from '@/features/auth/hooks/useAuth'
@@ -81,8 +82,8 @@ export function RegisterForm({ onSwitchToLogin }: { onSwitchToLogin: () => void 
       try {
         await registerMutation.mutateAsync({ email, password })
         navigate('/dashboard', { replace: true })
-      } catch {
-        setServerError('Registration failed. Please try again.')
+      } catch (error) {
+        setServerError(getErrorMessage(error, 'Registration failed. Please try again.'))
       }
     },
     [email, password, confirmPassword, registerMutation, navigate, validatePassword, validateConfirmPassword]
@@ -93,7 +94,7 @@ export function RegisterForm({ onSwitchToLogin }: { onSwitchToLogin: () => void 
   const confirmPasswordError = touched.confirmPassword ? errors.confirmPassword : undefined
 
   return (
-    <form className="flex flex-col gap-3.5" onSubmit={handleSubmit}>
+    <form className="flex flex-col gap-3.5" noValidate onSubmit={handleSubmit}>
       {serverError && (
         <ErrorState title="Registration failed" message={serverError} />
       )}
@@ -113,7 +114,7 @@ export function RegisterForm({ onSwitchToLogin }: { onSwitchToLogin: () => void 
         />
       </Field>
 
-      <Field htmlFor="reg-password" label="Password" error={passwordError}>
+      <Field htmlFor="reg-password" label="Password" hint="Minimum 8 characters" error={passwordError}>
         <PasswordField
           id="reg-password"
           label=""
@@ -144,7 +145,7 @@ export function RegisterForm({ onSwitchToLogin }: { onSwitchToLogin: () => void 
         pending={registerMutation.isPending}
         className="w-full h-10 flex items-center justify-center gap-2 bg-sla-primary-container text-sla-on-primary text-headline-sm font-sla font-semibold text-decoration-none rounded-sm border-none cursor-pointer transition-colors shadow-[0_1px_2px_rgb(16_24_40/0.06)] hover:bg-sla-primary whitespace-nowrap mt-2"
       >
-        <span>Create Developer Account</span>
+        <span>Create Account</span>
       </Button>
 
       <p className="text-body-md leading-body-md text-sla-secondary text-center mt-4">

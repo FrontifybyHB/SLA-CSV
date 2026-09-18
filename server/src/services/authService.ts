@@ -19,6 +19,11 @@ const GENERIC_LOGIN_MESSAGE = "Invalid email or password";
 const GENERIC_REGISTER_MESSAGE = "Registration failed";
 const GENERIC_REFRESH_MESSAGE = "Invalid refresh token";
 const REFRESH_CODE = "INVALID_REFRESH_TOKEN";
+// A replay of a just-rotated token is overwhelmingly a benign concurrent
+// duplicate (two queries expiring at once, StrictMode remount, two tabs) —
+// not theft. Only treat replays older than this as theft.
+// Reduced from 60s to 5s to minimize token reuse attack window.
+const REFRESH_REUSE_GRACE_MS = 5_000;
 
 export class AuthService {
   constructor(
@@ -79,11 +84,30 @@ export class AuthService {
       return this.rotate(valid);
     }
 
-    // findValidByHash excluded the row (expired OR revoked). Distinguish reuse: a
-    // revoked token that was rotated (replaced_by set) means someone is replaying an
-    // old token -> presumed theft.
+    // findValidByHash excluded the row (expired OR revoked). Distinguish a
+    // benign concurrent replay from theft: a revoked token that was rotated
+    // moments ago (replaced_by set, revoked within the grace window) means a
+    // duplicate in-flight refresh — rotate the live replacement forward so
+    // every racer converges on a valid token family instead of nuking the
+    // user's sessions. Anything older is presumed theft.
     const found = await this.refreshTokenRepository.findByHash(tokenHash);
     if (found && found.revokedAt && found.replacedBy) {
+      const rotatedAgoMs = Date.now() - found.revokedAt.getTime();
+      if (rotatedAgoMs <= REFRESH_REUSE_GRACE_MS) {
+        const replacement = await this.refreshTokenRepository.findById(found.replacedBy);
+        if (
+          replacement &&
+          replacement.userId === found.userId &&
+          !replacement.revokedAt &&
+          replacement.expiresAt.getTime() > Date.now()
+        ) {
+          logger.info("Duplicate refresh within grace window; rotating forward", {
+            userId: found.userId,
+            tokenId: found.id,
+          });
+          return this.rotate(replacement);
+        }
+      }
       logger.warn("Suspected refresh token reuse; revoking all sessions", {
         userId: found.userId,
         tokenId: found.id,

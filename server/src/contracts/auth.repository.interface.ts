@@ -19,6 +19,9 @@ export interface IRefreshTokenRepository {
 
   findValidByHash(tokenHash: string): Promise<RefreshTokenRecord | null>;
 
+  /** Fetch a row by id (used to follow the rotation chain on replay). */
+  findById(id: string): Promise<RefreshTokenRecord | null>;
+
   revoke(id: string): Promise<void>;
 
   revokeAllForUser(userId: string): Promise<void>;

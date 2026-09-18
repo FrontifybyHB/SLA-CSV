@@ -3,6 +3,7 @@ import { SlaCsvProcessor, SlaProcessingResult } from "../domain/SlaCsvProcessor.
 import type { IDatasetRepository } from "../contracts/repository.interface.js";
 import type { QualityMetrics } from "../domain/QualityMetricsCalculator.js";
 import type { AgentId, PreparedImport } from "../contracts/import.js";
+import logger from "../middlewares/logger.js";
 
 export interface ImportDatasetInput {
   bytes: Buffer;
@@ -21,6 +22,8 @@ export interface ImportDatasetOutput {
   observationCount: number;
   slotCount: number;
   issueCount: number;
+  startDate?: Date;
+  endDate?: Date;
   uploadedAt?: Date;
   metrics?: QualityMetrics;
 }
@@ -33,12 +36,23 @@ export class SlaDatasetImporter {
   ) {}
 
   async importDataset(input: ImportDatasetInput): Promise<ImportDatasetOutput> {
+    const overallStart = process.hrtime.bigint();
+    const fileSizeKb = Math.round(input.bytes.length / 1024);
+
     const fileHash = this.fileHasher.sha256(input.bytes);
     const policyVersion = input.policyVersion;
 
     // Check idempotency key: (file_sha256 + policy_version + owner user_id)
     const existing = await this.repository.findByHash(fileHash, policyVersion, input.userId);
     if (existing) {
+      const elapsedMs = Number(process.hrtime.bigint() - overallStart) / 1_000_000;
+      logger.info("CSV import skipped (duplicate)", {
+        userId: input.userId,
+        filename: input.filename,
+        fileSizeKb,
+        datasetId: existing.datasetId,
+        totalTimeMs: Math.round(elapsedMs),
+      });
       return {
         reused: true,
         datasetId: existing.datasetId,
@@ -76,12 +90,15 @@ export class SlaDatasetImporter {
       },
       observations: processed.observations.map((o) => ({
         agentId: o.agentId as AgentId,
+        service: o.service,
         timestamp: o.timestamp,
         latencyMs: o.latencyMs,
         status: (o.status === "UP" ? "up" : o.status === "DOWN" ? "down" : "unknown"),
+        region: o.region,
       })),
       slots: processed.slots.map((s) => ({
         slotKey: s.slotKey,
+        service: s.service,
         startTime: s.startTime,
         endTime: s.endTime,
         durationSeconds: s.durationSeconds,
@@ -97,7 +114,23 @@ export class SlaDatasetImporter {
       })),
     };
 
+    const saveStart = process.hrtime.bigint();
     const saved = await this.repository.saveImport(prepared);
+    const saveTimeMs = Number(process.hrtime.bigint() - saveStart) / 1_000_000;
+    const totalTimeMs = Number(process.hrtime.bigint() - overallStart) / 1_000_000;
+
+    logger.info("CSV import persisted", {
+      userId: input.userId,
+      filename: input.filename,
+      fileSizeKb,
+      datasetId: saved.datasetId,
+      observationCount: saved.observationCount,
+      slotCount: saved.slotCount,
+      issueCount: saved.issueCount,
+      processingTimeMs: processed.metrics?.processingTimeMs ?? 0,
+      dbSaveTimeMs: Math.round(saveTimeMs),
+      totalTimeMs: Math.round(totalTimeMs),
+    });
 
     return {
       reused: false,
@@ -107,6 +140,8 @@ export class SlaDatasetImporter {
       observationCount: saved.observationCount,
       slotCount: saved.slotCount,
       issueCount: saved.issueCount,
+      startDate,
+      endDate,
       uploadedAt: new Date(),
       metrics: processed.metrics,
     };

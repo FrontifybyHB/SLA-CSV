@@ -61,6 +61,7 @@ export const passwordHasher = new PasswordHasher();
 export const tokenService = new TokenService(
   env.ACCESS_TOKEN_SECRET,
   env.REFRESH_TOKEN_SECRET,
+  env.REFRESH_TOKEN_PEPPER,
 );
 export const userRepository = new PostgresUserRepository(pool);
 export const refreshTokenRepository = new PostgresRefreshTokenRepository(pool);

@@ -13,6 +13,7 @@ import { SLOT_DURATION_SECONDS } from "../src/domain/constants.js";
 function obs(agentId: string, timestamp: string, status: "up" | "down" | "unknown"): ParsedObservation {
   return {
     agentId: agentId as ParsedObservation["agentId"],
+    service: "api",
     timestamp: new Date(timestamp),
     latencyMs: 100,
     status,

@@ -1,4 +1,4 @@
-export type CanonicalField = "timestamp" | "service" | "status" | "latency" | "agent";
+export type CanonicalField = "timestamp" | "service" | "status" | "latency" | "agent" | "region";
 
 export interface HeaderMapping {
   timestampIdx: number;
@@ -6,6 +6,7 @@ export interface HeaderMapping {
   statusIdx: number;
   latencyIdx: number;
   agentIdx: number;
+  regionIdx: number;
 }
 
 export class FieldAliasResolver {
@@ -17,18 +18,37 @@ export class FieldAliasResolver {
     phase: "timestamp",
     datetime: "timestamp",
     date: "timestamp",
+    checked_at: "timestamp",
+    checkedat: "timestamp",
+    created_at: "timestamp",
 
     // service
     service: "service",
     target: "service",
     service_name: "service",
     servicename: "service",
+    "service name": "service",
+    svc: "service",
+    serviceid: "service",
+    service_id: "service",
+    endpoint: "service",
+    check: "service",
+    monitor: "service",
 
-    // status
+    // status — numeric codes arrive here too (e.g. status_code, http_status)
     status: "status",
     result: "status",
     state: "status",
     availability: "status",
+    status_code: "status",
+    statuscode: "status",
+    "status code": "status",
+    http_status: "status",
+    httpstatus: "status",
+    http_code: "status",
+    httpcode: "status",
+    code: "status",
+    statuscodevalue: "status",
 
     // latency
     latency: "latency",
@@ -39,17 +59,39 @@ export class FieldAliasResolver {
     responsetimems: "latency",
     response: "latency",
     response_time: "latency",
+    responsetime: "latency",
     responsems: "latency",
+    response_ms: "latency",
+    responsetimeseconds: "latency",
+    duration: "latency",
+    duration_ms: "latency",
+    elapsed: "latency",
+    elapsed_ms: "latency",
 
-    // agent
+    // agent — the probe/server that performed the check.
+    // NOTE: `region`/`location` are NOT agents; they are stored separately.
     agent: "agent",
     agent_id: "agent",
     agentid: "agent",
     "agent id": "agent",
-    region: "agent",
     server: "agent",
     host: "agent",
     node: "agent",
+    probe: "agent",
+    probe_id: "agent",
+    checker: "agent",
+    monitor_id: "agent",
+
+    // region — where the check ran / target region (stored, never an agent)
+    region: "region",
+    loc: "region",
+    location: "region",
+    az: "region",
+    zone: "region",
+    datacenter: "region",
+    dc: "region",
+    site: "region",
+    pop: "region",
   };
 
   constructor() {}
@@ -65,6 +107,7 @@ export class FieldAliasResolver {
     let statusIdx = -1;
     let latencyIdx = -1;
     let agentIdx = -1;
+    let regionIdx = -1;
 
     for (let i = 0; i < headers.length; i++) {
       const canonical = this.resolve(headers[i]);
@@ -74,6 +117,7 @@ export class FieldAliasResolver {
       else if (canonical === "status" && statusIdx === -1) statusIdx = i;
       else if (canonical === "latency" && latencyIdx === -1) latencyIdx = i;
       else if (canonical === "agent" && agentIdx === -1) agentIdx = i;
+      else if (canonical === "region" && regionIdx === -1) regionIdx = i;
     }
 
     return {
@@ -82,6 +126,7 @@ export class FieldAliasResolver {
       statusIdx,
       latencyIdx,
       agentIdx,
+      regionIdx,
     };
   }
 }

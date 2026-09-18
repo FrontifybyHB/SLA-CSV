@@ -37,11 +37,11 @@ const env = {
     process.env.REFRESH_TOKEN_PEPPER,
     "dev-pepper-change-in-production"
   ),
-  // Frontend API base URL (used by client build)
+  // API base exposed to the browser via /config.js (defaults to same-origin /api/v1)
   API_BASE_URL: optional(
     "API_BASE_URL",
     process.env.API_BASE_URL,
-    "http://localhost:3000/api/v1"
+    "/api/v1"
   ),
 };
 

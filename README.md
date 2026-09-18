@@ -320,10 +320,17 @@ COOKIE_DOMAIN=localhost
 CLIENT_ORIGIN=http://localhost:5173
 ```
 
-**Client** (optional — Vite reads `.env` in `client/`):
+**Server runtime config for the browser** (`server/.env`):
 ```env
-# Defaults to same-origin /api/v1 (production + local dev via Vite proxy).
-# Only set when the API is on another domain:
+# Same-origin monolith (default) — server serves /config.js with this value
+API_BASE_URL=/api/v1
+
+# Only when API is on another domain:
+# API_BASE_URL=https://your-production-domain.com/api/v1
+```
+
+**Client** (optional — only for separate frontend deploys; monolith uses `/config.js`):
+```env
 # VITE_API_BASE=https://your-production-domain.com/api/v1
 ```
 
@@ -346,8 +353,10 @@ npm dev            # Starts Vite on :5173
 
 ```bash
 # Server
-npm build          # TypeScript compile to dist/
-npm start          # Run compiled dist/server.js
+npm run build:client  # Build React app into server/public/
+npm run build:all     # Client build + TypeScript compile to dist/
+npm build             # TypeScript compile to dist/
+npm start             # Run compiled dist/server.js
 npm lint           # ESLint
 npm typecheck      # tsc --noEmit
 npm test           # Node test runner (domain tests)

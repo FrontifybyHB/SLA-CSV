@@ -7,6 +7,8 @@
   "main": "dist/server.js",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
+    "build:client": "npm run build --prefix ../client",
+    "build:all": "npm run build:client && npm run build",
     "start": "node dist/server.js",
     "dev": "tsx watch server.ts",
     "lint": "eslint .",

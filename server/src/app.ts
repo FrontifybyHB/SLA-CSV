@@ -23,6 +23,7 @@ import { sendSuccess } from "./utils/apiResponse.js";
 import { checkDatabaseReady, checkSchemaReady } from "./db/pool.js";
 import logger from "./middlewares/logger.js";
 import env from "./config/env.js";
+import { getApiConnectSrcOrigins, getPublicRuntimeConfig } from "./config/publicConfig.js";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -55,7 +56,7 @@ export function createApp(): express.Express {
         styleSrcElem: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
         imgSrc: ["'self'", "data:", "blob:"],
         fontSrc: ["'self'", "https://fonts.gstatic.com"],
-        connectSrc: ["'self'"],
+        connectSrc: ["'self'", ...getApiConnectSrcOrigins()],
         frameSrc: ["'none'"],
         objectSrc: ["'none'"],
         baseUri: ["'self'"],
@@ -100,16 +101,11 @@ export function createApp(): express.Express {
     next();
   });
 
-  // Serve static files from public directory (built frontend)
-  app.use(express.static(publicDir, {
-    maxAge: "1y",
-    etag: true,
-    lastModified: true,
-  }));
-
-  // SPA fallback: serve index.html for all non-API, non-asset, non-health routes
-  app.get(/^\/(?!api\/|assets\/|health).*/, (_req, res) => {
-    res.sendFile(path.join(publicDir, "index.html"));
+  // Runtime frontend config — must be registered before static/SPA fallback.
+  app.get("/config.js", (_req, res) => {
+    res.type("application/javascript");
+    res.set("Cache-Control", "no-store");
+    res.send(`window.__APP_CONFIG__=${JSON.stringify(getPublicRuntimeConfig())};`);
   });
 
   // Liveness + dependency probe. Never 500s on auth/upload again without an
@@ -144,6 +140,18 @@ export function createApp(): express.Express {
   }, authMiddleware));
   app.use("/api/v1/datasets", createDatasetRouter(datasetController, authMiddleware));
   app.use("/api/v1/reporting", createReportingRouter(dashboardController, authMiddleware));
+
+  // Serve static files from public directory (built frontend)
+  app.use(express.static(publicDir, {
+    maxAge: "1y",
+    etag: true,
+    lastModified: true,
+  }));
+
+  // SPA fallback: serve index.html for all non-API, non-asset, non-health routes
+  app.get(/^\/(?!api\/|assets\/|health|config\.js).*/, (_req, res) => {
+    res.sendFile(path.join(publicDir, "index.html"));
+  });
 
   app.use(notFoundHandler);
   app.use(errorHandler);

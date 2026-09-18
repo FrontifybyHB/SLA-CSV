@@ -19,6 +19,10 @@ export default defineConfig({
         target: proxyTarget,
         changeOrigin: true,
       },
+      '/config.js': {
+        target: proxyTarget,
+        changeOrigin: true,
+      },
     },
   },
   build: {

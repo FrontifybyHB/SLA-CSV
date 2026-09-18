@@ -1,46 +1,14 @@
-import { readRuntimeConfig } from './runtime-config'
-
-const DEFAULT_API_BASE = '/api/v1'
-
-function normalizeBase(value: string): string {
-  return value.trim().replace(/\/+$/, '')
-}
+const PRODUCTION_API_BASE = 'https://sla-csv-seven.vercel.app/api/v1'
 
 /**
  * API base for all client requests.
- *
- * Resolution order:
- * 1. Runtime config from server `/config.js` (`window.__APP_CONFIG__.apiBase`)
- * 2. Build-time `VITE_API_BASE` (local dev / separate frontend deploy)
- * 3. Same-origin `/api/v1` (monolith default)
+ * Hardcoded to production URL.
  */
 export function getApiBase(): string {
-  const runtimeBase = readRuntimeConfig()?.apiBase
-  if (runtimeBase?.trim()) {
-    return normalizeBase(runtimeBase)
-  }
-
-  // Build-time override is dev-only. Production monoliths must use /config.js
-  // so a developer .env never bakes localhost into the deployed bundle.
-  if (import.meta.env.DEV) {
-    const buildBase = import.meta.env.VITE_API_BASE as string | undefined
-    if (buildBase?.trim()) {
-      return normalizeBase(buildBase)
-    }
-  }
-
-  return DEFAULT_API_BASE
+  return PRODUCTION_API_BASE
 }
 
-/** Same as getApiBase(), but resolves relative paths against window.location. */
+/** Returns the absolute API base (already absolute in production). */
 export function getAbsoluteApiBase(): string {
-  const base = getApiBase()
-  if (/^https?:\/\//i.test(base)) {
-    return base
-  }
-  if (typeof window !== 'undefined') {
-    const path = base.startsWith('/') ? base : `/${base}`
-    return `${window.location.origin}${path}`.replace(/\/+$/, '')
-  }
-  return base
+  return PRODUCTION_API_BASE
 }

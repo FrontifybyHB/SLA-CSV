@@ -9,15 +9,15 @@ function required(name: string, value: string | undefined): string {
   return value;
 }
 
-function optional(name: string, value: string | undefined, fallback: string): string {
-  return value ?? fallback;
-}
-
 function parseCorsOrigins(value: string | undefined): string[] {
   if (!value) {
     return ["http://localhost:5173"];
   }
   return value.split(",").map((s) => s.trim()).filter(Boolean);
+}
+
+function optional(name: string, value: string | undefined, fallback: string): string {
+  return value ?? fallback;
 }
 
 const env = {
@@ -36,6 +36,12 @@ const env = {
     "REFRESH_TOKEN_PEPPER",
     process.env.REFRESH_TOKEN_PEPPER,
     "dev-pepper-change-in-production"
+  ),
+  // Frontend API base URL (used by client build)
+  API_BASE_URL: optional(
+    "API_BASE_URL",
+    process.env.API_BASE_URL,
+    "http://localhost:3000/api/v1"
   ),
 };
 

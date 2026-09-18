@@ -23,6 +23,18 @@ import { sendSuccess } from "./utils/apiResponse.js";
 import { checkDatabaseReady, checkSchemaReady } from "./db/pool.js";
 import logger from "./middlewares/logger.js";
 import env from "./config/env.js";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const moduleDir = path.dirname(fileURLToPath(import.meta.url));
+const publicDir = [
+  path.resolve(moduleDir, "../public"),
+  path.resolve(moduleDir, "../../public"),
+  path.resolve(process.cwd(), "server/public"),
+  path.resolve(process.cwd(), "public"),
+].find((directory) => fs.existsSync(path.join(directory, "index.html")))
+  ?? path.resolve(moduleDir, "../public");
 
 export function createApp(): express.Express {
   const app = express();
@@ -39,9 +51,10 @@ export function createApp(): express.Express {
       directives: {
         defaultSrc: ["'self'"],
         scriptSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        styleSrcElem: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
         imgSrc: ["'self'", "data:", "blob:"],
-        fontSrc: ["'self'"],
+        fontSrc: ["'self'", "https://fonts.gstatic.com"],
         connectSrc: ["'self'"],
         frameSrc: ["'none'"],
         objectSrc: ["'none'"],
@@ -87,12 +100,16 @@ export function createApp(): express.Express {
     next();
   });
 
-  app.get("/", (_req, res) => {
-    sendSuccess(res, {
-      statusCode: 200,
-      message: "SLA CSV monitoring API",
-      data: { environment: env.NODE_ENV },
-    });
+  // Serve static files from public directory (built frontend)
+  app.use(express.static(publicDir, {
+    maxAge: "1y",
+    etag: true,
+    lastModified: true,
+  }));
+
+  // SPA fallback: serve index.html for all non-API, non-asset, non-health routes
+  app.get(/^\/(?!api\/|assets\/|health).*/, (_req, res) => {
+    res.sendFile(path.join(publicDir, "index.html"));
   });
 
   // Liveness + dependency probe. Never 500s on auth/upload again without an

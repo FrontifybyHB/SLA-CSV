@@ -1,0 +1,2 @@
+import{j as e}from"./query-Cy0c78Kz.js";function n({items:t}){return e.jsx("dl",{className:"flex flex-col gap-2 font-mono text-label-md",children:t.map(([s,a])=>e.jsxs("div",{className:"flex items-center justify-between gap-3 p-2 rounded-sm bg-sla-surface border border-sla-outline-variant/60 min-w-0",children:[e.jsx("dt",{className:"text-sla-secondary shrink-0",children:s}),e.jsx("dd",{className:"font-semibold text-sla-on-surface text-right truncate min-w-0",children:a})]},s))})}export{n as K};
+//# sourceMappingURL=KVList-BIC6KyII.js.map

@@ -2,6 +2,7 @@
 import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import path from 'node:path'
 
 const proxyTarget = process.env.VITE_API_PROXY_TARGET ?? 'http://localhost:3000'
 
@@ -21,6 +22,8 @@ export default defineConfig({
     },
   },
   build: {
+    outDir: path.resolve(__dirname, '../server/public'),
+    emptyOutDir: true,
     cssCodeSplit: true,
     modulePreload: {
       polyfill: false,

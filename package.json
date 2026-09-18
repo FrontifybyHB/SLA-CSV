@@ -1,0 +1,47 @@
+{
+  "name": "sla-csv",
+  "private": true,
+  "version": "1.0.0",
+  "main": "server/dist/server.js",
+  "type": "module",
+  "scripts": {
+    "build": "npm run build --prefix server",
+    "build:client": "npm run build --prefix client",
+    "build:all": "npm run build:client && npm run build",
+    "dev": "npm run dev --prefix server",
+    "start": "node server/dist/server.js",
+    "lint": "npm run lint --prefix server && npm run lint --prefix client",
+    "typecheck": "npm run typecheck --prefix server && npm run typecheck --prefix client",
+    "migrate": "npm run migrate --prefix server"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "compression": "^1.8.2",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "csv-parse": "^5.6.0",
+    "dotenv": "^16.4.7",
+    "express": "^5.1.0",
+    "helmet": "^8.1.0",
+    "joi": "^17.13.3",
+    "jsonwebtoken": "^9.0.3",
+    "morgan": "^1.10.1",
+    "pg": "^8.13.3",
+    "winston": "^3.17.0"
+  },
+  "devDependencies": {
+    "@types/compression": "^1.7.5",
+    "@types/cookie-parser": "^1.4.10",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.2",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/morgan": "^1.9.9",
+    "@types/node": "^22.15.2",
+    "@types/pg": "^8.11.11",
+    "eslint": "^9.25.0",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.70.0",
+    "vercel": "^32.0.0"
+  }
+}

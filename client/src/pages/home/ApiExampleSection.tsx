@@ -3,7 +3,9 @@ import { Icon } from '@/shared/ui/Icon'
 import { IconButton } from '@/shared/ui/IconButton'
 import { useCopyToClipboard } from '@/shared/lib/useCopyToClipboard'
 
-const CURL_SNIPPET = `curl -X POST http://localhost:3000/api/v1/datasets \\
+const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000'
+
+const CURL_SNIPPET = `curl -X POST ${API_BASE_URL}/api/v1/datasets \\
   -H "Authorization: Bearer $TOKEN" \\
   -H "Content-Type: text/csv" \\
   --data-binary @telemetry.csv`
@@ -21,7 +23,7 @@ interface CodeLine {
 
 const CODE_LINES: readonly CodeLine[] = [
   { className: 'text-sla-outline', content: '# Upload a CSV extract (same call the dashboard makes)' },
-  { className: 'text-sla-primary font-semibold', content: 'curl', suffix: ' -X POST http://localhost:3000/api/v1/datasets {' },
+  { className: 'text-sla-primary font-semibold', content: 'curl', suffix: ` -X POST ${API_BASE_URL}/api/v1/datasets {'` },
   { indent: 1, className: '', content: '-H ', highlight: '"Authorization: Bearer $TOKEN"', suffix: ' {' },
   { indent: 1, className: '', content: '-H ', highlight: '"Content-Type: text/csv"', suffix: ' {' },
   { indent: 1, className: '', content: '--data-binary @telemetry.csv' },

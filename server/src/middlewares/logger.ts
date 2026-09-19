@@ -11,19 +11,25 @@ const logFormat = format.combine(
   })
 );
 
+const loggerTransports: winston.transport[] = [];
+// Vercel serverless (and any production runtime) has a read-only filesystem
+// except /tmp, so `logs/*.log` file writes crash the function with an
+// unhandled winston 'error' event (surfaced as FUNCTION_INVOCATION_FAILED).
+// Log to stdout there — Vercel captures it in the function logs.
+if (process.env.VERCEL === "1" || process.env.NODE_ENV === "production") {
+  loggerTransports.push(new transports.Console({ format: logFormat }));
+} else {
+  loggerTransports.push(
+    new transports.File({ filename: "logs/error.log", level: "error" }),
+    new transports.File({ filename: "logs/combined.log" }),
+    new transports.Console({ format: logFormat }),
+  );
+}
+
 const logger = createLogger({
   level: "info",
   format: logFormat,
-  transports: [
-    new transports.File({ filename: "logs/error.log", level: "error" }),
-    new transports.File({ filename: "logs/combined.log" }),
-  ],
+  transports: loggerTransports,
 });
-
-if (process.env.NODE_ENV !== "production") {
-  logger.add(
-    new transports.Console({ format: logFormat })
-  );
-}
 
 export default logger;

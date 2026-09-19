@@ -1,13 +1,13 @@
 {
-  "buildCommand": "cd server && npm run build",
-  "outputDirectory": "server/dist",
-  "devCommand": "cd server && npm run dev",
-  "installCommand": "cd server && npm install",
+  "buildCommand": "npm run build",
+  "outputDirectory": "/dist",
+  "devCommand": "npm run dev",
+  "installCommand": " npm install",
   "framework": "node",
   "rewrites": [
     {
       "source": "/(.*)",
-      "destination": "/server.js"
+      "destination": "/"
     }
   ]
 }

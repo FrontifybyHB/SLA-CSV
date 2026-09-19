@@ -7,7 +7,6 @@
   "main": "dist/server.js",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "vercel-build": "npm run build",
     "start": "node dist/server.js",
     "dev": "tsx watch server.ts",
     "lint": "eslint .",

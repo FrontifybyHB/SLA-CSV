@@ -60,7 +60,7 @@ export const AuthCard = memo(function AuthCard() {
             <div className="w-full border-t border-sla-outline-variant/40" />
           </div>
           <div className="relative flex justify-center">
-            <span className="bg-sla-surface-container-lowest px-3 text-body-sm text-sla-secondary whitespace-nowrap">
+            <span className="bg-sla-surface-container-lowest px-3 text-body-sm text-sla-secondary text-center">
               sign in with your work email
             </span>
           </div>

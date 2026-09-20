@@ -166,7 +166,7 @@ export const DashboardHeader = memo(function DashboardHeader({
               type="button"
               onClick={onSignOut}
               disabled={signingOut}
-              className="hidden lg:inline-flex px-2 py-1 rounded-sm border border-sla-outline-variant font-mono text-label-sm text-sla-secondary hover:text-sla-on-surface hover:bg-sla-surface disabled:opacity-55 whitespace-nowrap"
+              className="hidden lg:inline-flex px-2 py-1 rounded-sm border border-sla-danger/50 font-mono text-label-sm text-sla-danger hover:bg-sla-danger-soft hover:border-sla-danger disabled:opacity-55 whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-sla-danger focus-visible:ring-offset-1"
             >
               {signingOut ? 'Signing out…' : 'Sign out'}
             </button>
@@ -220,7 +220,7 @@ export const DashboardHeader = memo(function DashboardHeader({
               type="button"
               onClick={onSignOut}
               disabled={signingOut}
-              className="block w-full text-left py-2.5 font-mono text-label-md text-sla-secondary disabled:opacity-55"
+              className="block w-full text-left py-2.5 font-mono text-label-md font-semibold text-sla-danger disabled:opacity-55"
             >
               {signingOut ? 'Signing out…' : 'Sign out'}
             </button>

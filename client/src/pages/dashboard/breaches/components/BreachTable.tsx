@@ -44,7 +44,7 @@ const ExpandedDetail = memo(function ExpandedDetail({ log }: { log: ObservationL
           <div className="font-mono text-[11px] text-sla-on-surface uppercase font-semibold mb-2 border-b border-sla-outline-variant/50 pb-1.5">
             Raw payload
           </div>
-          <pre className="font-mono text-[11px] text-sla-secondary overflow-x-auto whitespace-pre-wrap break-all bg-sla-surface p-2 rounded-lg border border-sla-outline-variant/50 thin-scroll">
+          <pre className="font-mono text-[11px] text-sla-secondary overflow-auto max-h-48 min-w-0 whitespace-pre-wrap break-all bg-sla-surface p-2 rounded-[5px] border border-sla-outline-variant/50 thin-scroll">
             {JSON.stringify(log, null, 2)}
           </pre>
         </div>
@@ -113,7 +113,8 @@ export const BreachTable = memo(function BreachTable({
       {
         key: 'region',
         header: 'Region',
-        cellClassName: 'whitespace-nowrap text-sla-secondary',
+        headerClassName: 'hidden md:table-cell',
+        cellClassName: 'hidden md:table-cell whitespace-nowrap text-sla-secondary',
         render: (log) => log.region || '—',
       },
       {
@@ -147,7 +148,7 @@ export const BreachTable = memo(function BreachTable({
               type="button"
               onClick={() => setExpandedKey((prev) => (prev === key ? null : key))}
               aria-expanded={isExpanded}
-              className="rounded-lg border border-sla-outline-variant bg-white px-2.5 py-1 font-mono text-[11px] font-medium text-sla-secondary shadow-sm transition-all duration-150 hover:text-sla-on-surface hover:border-sla-outline active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-sla-primary focus-visible:ring-offset-1"
+              className="rounded-[5px] border border-sla-outline-variant bg-white px-2.5 py-1 font-mono text-[11px] font-medium text-sla-secondary shadow-sm transition-all duration-150 hover:text-sla-on-surface hover:border-sla-outline active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-sla-primary focus-visible:ring-offset-1"
             >
               {isExpanded ? 'Collapse [▲]' : 'Inspect [↵]'}
             </button>

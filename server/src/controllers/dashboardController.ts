@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 
 import type { ReportingService } from "../services/reportingService.js";
+import { AuthenticationError } from "../middlewares/appError.js";
 import { sendSuccess } from "../utils/apiResponse.js";
 
 interface ReportingQuery {
@@ -26,6 +27,14 @@ interface IssuesQuery {
 export class DashboardController {
   constructor(private readonly reportingService: ReportingService) {}
 
+  private static requireUserId(req: Request): string {
+    const userId = req.user?.id;
+    if (!userId) {
+      throw new AuthenticationError("Authentication required", "UNAUTHORIZED", 401);
+    }
+    return userId;
+  }
+
   stats = async (
     req: Request,
     res: Response,
@@ -34,7 +43,7 @@ export class DashboardController {
     try {
       const query = (req.validated?.query ?? req.query) as ReportingQuery;
       const result = await this.reportingService.getStats(
-        req.user!.id,
+        DashboardController.requireUserId(req),
         toArray(query.datasetId),
         { startDate: new Date(query.startDate), endDate: new Date(query.endDate) },
         { service: query.service, region: query.region, status: query.status },
@@ -57,7 +66,7 @@ export class DashboardController {
     try {
       const query = (req.validated?.query ?? req.query) as PaginatedQuery;
       const result = await this.reportingService.getLogs(
-        req.user!.id,
+        DashboardController.requireUserId(req),
         toArray(query.datasetId),
         { startDate: new Date(query.startDate), endDate: new Date(query.endDate) },
         query.page ?? 1,
@@ -82,7 +91,7 @@ export class DashboardController {
     try {
       const query = (req.validated?.query ?? req.query) as PaginatedQuery;
       const result = await this.reportingService.getSlots(
-        req.user!.id,
+        DashboardController.requireUserId(req),
         toArray(query.datasetId),
         { startDate: new Date(query.startDate), endDate: new Date(query.endDate) },
         query.page ?? 1,
@@ -107,7 +116,7 @@ export class DashboardController {
     try {
       const query = (req.validated?.query ?? req.query) as IssuesQuery;
       const result = await this.reportingService.getIssues(
-        req.user!.id,
+        DashboardController.requireUserId(req),
         toArray(query.datasetId),
         query.page ?? 1,
         query.pageSize ?? 50,

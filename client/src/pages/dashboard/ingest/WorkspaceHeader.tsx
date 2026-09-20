@@ -58,7 +58,7 @@ export function WorkspaceHeader() {
         </Button>
         <Link
           to="/dashboard"
-          className="inline-flex items-center gap-2 px-2.5 py-1.5 text-sm rounded-sm bg-sla-primary text-white hover:bg-sla-primary-hover font-medium no-underline"
+          className="inline-flex items-center gap-2 px-2.5 py-1.5 text-sm rounded-sm bg-sla-primary-container text-sla-on-primary hover:bg-sla-primary font-medium no-underline"
         >
           <Icon name="monitoring" size={16} />
           SLA overview

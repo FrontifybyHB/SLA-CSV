@@ -50,8 +50,12 @@ export const statsQuerySchema = Joi.object({
   "any.required": "startDate and endDate query parameters are required",
 });
 
+// page is capped: an unbounded OFFSET forces the DB to scan and skip an
+// arbitrary number of rows on every request.
+const MAX_PAGE = 1000;
+
 export const logsQuerySchema = statsQuerySchema.keys({
-  page: Joi.number().integer().min(1).default(1),
+  page: Joi.number().integer().min(1).max(MAX_PAGE).default(1),
   pageSize: Joi.number().integer().min(1).max(500).default(50),
 });
 
@@ -62,6 +66,6 @@ export const issuesQuerySchema = Joi.object({
     Joi.string().uuid(),
     Joi.array().items(Joi.string().uuid()),
   ).optional(),
-  page: Joi.number().integer().min(1).default(1),
+  page: Joi.number().integer().min(1).max(MAX_PAGE).default(1),
   pageSize: Joi.number().integer().min(1).max(500).default(50),
 });

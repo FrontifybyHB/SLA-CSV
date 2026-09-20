@@ -50,22 +50,37 @@ export class AuthService {
     }
 
     const passwordHash = await this.passwordHasher.hash(password);
-    const user = await this.userRepository.create({
-      email: normalizedEmail,
-      passwordHash,
-    });
-
-    return this.issueTokens(user);
+    try {
+      const user = await this.userRepository.create({
+        email: normalizedEmail,
+        passwordHash,
+      });
+      return this.issueTokens(user);
+    } catch (err) {
+      // Check-then-insert race (concurrent double-register): the UNIQUE
+      // constraint on users.email fires with pg code 23505. Map it to the
+      // same generic 400 as the pre-check so no raw DB error leaks.
+      if (isUniqueViolation(err)) {
+        throw new AuthenticationError(GENERIC_REGISTER_MESSAGE, "REGISTRATION_FAILED", 400);
+      }
+      throw err;
+    }
   }
 
   async login(email: string, password: string): Promise<AuthSessionResult> {
     const normalizedEmail = normalizeEmail(email);
 
     const user = await this.userRepository.findByEmail(normalizedEmail);
-    const passwordValid =
-      user !== null && (await this.passwordHasher.verify(password, user.passwordHash));
+    if (!user) {
+      // Timing mitigation: a nonexistent user must cost the same ~bcrypt
+      // compare as a wrong password, or response time alone reveals which
+      // emails are registered despite the generic error message.
+      await this.passwordHasher.verify(password, await dummyHash(this.passwordHasher));
+      throw new AuthenticationError(GENERIC_LOGIN_MESSAGE, "INVALID_CREDENTIALS", 401);
+    }
 
-    if (!user || !passwordValid) {
+    const passwordValid = await this.passwordHasher.verify(password, user.passwordHash);
+    if (!passwordValid) {
       throw new AuthenticationError(GENERIC_LOGIN_MESSAGE, "INVALID_CREDENTIALS", 401);
     }
 
@@ -139,17 +154,34 @@ export class AuthService {
     }
 
     const fresh = this.tokenService.signRefreshToken(user.id);
-    const newId = await this.refreshTokenRepository.store({
+    const newId = await this.refreshTokenRepository.rotate(record.id, {
       userId: user.id,
       tokenHash: fresh.tokenHash,
       expiresAt: fresh.expiresAt,
     });
-    await this.refreshTokenRepository.markReplaced(record.id, newId);
 
-    return {
-      accessToken: this.tokenService.signAccessToken(user.id, user.role),
-      refreshToken: fresh.token,
-    };
+    if (newId) {
+      return {
+        accessToken: this.tokenService.signAccessToken(user.id, user.role),
+        refreshToken: fresh.token,
+      };
+    }
+
+    // Lost a concurrent rotation race: the winner already linked itself via
+    // replaced_by — follow the chain instead of minting a second branch.
+    const current = await this.refreshTokenRepository.findById(record.id);
+    if (current?.replacedBy) {
+      const replacement = await this.refreshTokenRepository.findById(current.replacedBy);
+      if (
+        replacement &&
+        replacement.userId === record.userId &&
+        !replacement.revokedAt &&
+        replacement.expiresAt.getTime() > Date.now()
+      ) {
+        return this.rotate(replacement);
+      }
+    }
+    throw new AuthenticationError(GENERIC_REFRESH_MESSAGE, REFRESH_CODE, 401);
   }
 
   private async issueTokens(user: UserRecord): Promise<AuthSessionResult> {
@@ -171,4 +203,24 @@ export class AuthService {
 
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
+}
+
+function isUniqueViolation(err: unknown): boolean {
+  return (
+    typeof err === "object" &&
+    err !== null &&
+    (err as { code?: unknown }).code === "23505"
+  );
+}
+
+// Lazily-created, cached bcrypt hash used only for the dummy compare on
+// unknown emails. Generated once per process so steady-state login timing
+// stays uniform without paying hash() on every request.
+let cachedDummyHash: Promise<string> | null = null;
+
+function dummyHash(hasher: PasswordHasher): Promise<string> {
+  if (!cachedDummyHash) {
+    cachedDummyHash = hasher.hash("timing-mitigation-dummy-value");
+  }
+  return cachedDummyHash;
 }

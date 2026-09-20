@@ -39,7 +39,7 @@ export const BreachToolbar = memo(function BreachToolbar({
     <div className="p-3 sm:p-3.5 flex flex-col gap-2.5">
       <div className="flex flex-col lg:flex-row lg:items-center gap-2">
         <div className="relative flex-1 flex items-center min-w-0">
-          <Icon name="search" size={16} className="absolute left-3 text-sla-text-muted pointer-events-none" />
+          <Icon name="search" size={16} className="absolute left-3 text-sla-secondary pointer-events-none" />
           <label htmlFor="breach-grep" className="sr-only">
             Filter breach logs by service, agent, region, status, or dataset
           </label>
@@ -49,7 +49,7 @@ export const BreachToolbar = memo(function BreachToolbar({
             value={query}
             onChange={(e) => onQueryChange(e.target.value)}
             placeholder="Filter by service, agent, region, status…"
-            className="w-full bg-white border border-sla-outline-variant/70 rounded-lg text-sla-on-surface font-mono text-[12px] pl-9 pr-3 py-2 shadow-sm focus:border-sla-primary focus:ring-2 focus:ring-sla-primary/20 outline-none transition-all placeholder:text-sla-text-faint truncate"
+            className="w-full bg-white border border-sla-outline-variant/70 rounded-[5px] text-sla-on-surface font-mono text-[12px] pl-9 pr-3 py-2 shadow-sm focus:border-sla-primary focus:ring-2 focus:ring-sla-primary/20 outline-none transition-all placeholder:text-sla-text-faint truncate"
           />
         </div>
 
@@ -58,19 +58,19 @@ export const BreachToolbar = memo(function BreachToolbar({
             type="button"
             onClick={onExport}
             disabled={exportDisabled}
-            className="bg-white text-sla-secondary hover:text-sla-on-surface hover:bg-sla-surface border border-sla-border-strong px-3 py-1.5 rounded-lg font-mono text-[12px] flex items-center gap-1.5 transition-all duration-150 shadow-sm whitespace-nowrap disabled:opacity-40 active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-sla-primary focus-visible:ring-offset-1"
+            className="bg-white text-sla-secondary hover:text-sla-on-surface hover:bg-sla-surface border border-sla-border-strong px-3 py-1.5 rounded-[5px] font-mono text-[12px] flex items-center gap-1.5 transition-all duration-150 shadow-sm whitespace-nowrap disabled:opacity-40 active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-sla-primary focus-visible:ring-offset-1"
           >
             <Icon name="download" size={14} />
             <span>EXPORT CSV</span>
           </button>
-          <span className="font-mono text-[11px] text-sla-text-muted whitespace-nowrap">
+          <span className="font-mono text-[11px] text-sla-secondary whitespace-nowrap">
             {resultCount} of {totalCount} rows
           </span>
         </div>
       </div>
 
       <div className="flex items-center flex-wrap gap-2 pt-2 border-t border-sla-outline-variant/50">
-        <span className="font-mono text-[10px] text-sla-text-muted uppercase tracking-wider select-none whitespace-nowrap">
+        <span className="font-mono text-[10px] text-sla-secondary uppercase tracking-wider select-none whitespace-nowrap">
           Status:
         </span>
         {STATUS_FILTERS.map((status) => {
@@ -81,9 +81,9 @@ export const BreachToolbar = memo(function BreachToolbar({
               type="button"
               onClick={() => onToggleStatus(status)}
               aria-pressed={active}
-              className={`font-mono text-[11px] px-2.5 py-1 rounded-lg border whitespace-nowrap transition-all duration-150 active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-sla-primary focus-visible:ring-offset-1 ${
+              className={`font-mono text-[11px] px-2.5 py-1 rounded-[5px] border whitespace-nowrap transition-all duration-150 active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-sla-primary focus-visible:ring-offset-1 ${
                 active
-                  ? 'bg-sla-primary-container border-sla-primary-container text-white font-semibold shadow-sm'
+                  ? 'bg-sla-primary-container border-sla-primary-container text-sla-on-primary font-semibold shadow-sm'
                   : 'bg-white border-sla-outline-variant text-sla-secondary hover:text-sla-on-surface hover:border-sla-outline'
               }`}
             >
@@ -95,7 +95,7 @@ export const BreachToolbar = memo(function BreachToolbar({
           <button
             type="button"
             onClick={onClearFilters}
-            className="text-sla-secondary hover:text-sla-primary font-mono text-[11px] ml-1 transition-colors whitespace-nowrap"
+            className="text-sla-secondary hover:text-sla-primary font-mono text-[11px] ml-1 rounded-sm transition-colors whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-sla-primary focus-visible:ring-offset-1"
           >
             Clear all
           </button>

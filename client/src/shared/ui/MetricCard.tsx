@@ -31,7 +31,7 @@ export function MetricCard({ title, hint, badge, children, footer, className }: 
         <h2 className="font-mono text-label-md font-bold tracking-wider truncate min-w-0">{title}</h2>
         {badge ? <span className="shrink-0">{badge}</span> : null}
       </div>
-      {hint ? <p className="text-body-sm text-text-muted pb-3">{hint}</p> : null}
+      {hint ? <p className="text-body-sm text-sla-secondary pb-3">{hint}</p> : null}
       <div className="flex-1 flex flex-col gap-3 min-w-0">{children}</div>
       {footer ? (
         <div className="pt-3 mt-3 border-t border-sla-outline-variant/50 font-mono text-label-sm text-sla-secondary min-w-0 overflow-wrap-anywhere">

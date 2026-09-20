@@ -27,6 +27,13 @@ export interface IRefreshTokenRepository {
   revokeAllForUser(userId: string): Promise<void>;
 
   markReplaced(oldId: string, newId: string): Promise<void>;
+
+  /**
+   * Atomically store a new token and mark the old one replaced (single DB
+   * transaction, row-locked). Returns the new id, or null when the old row
+   * was already revoked/expired — i.e. a concurrent refresh won the race.
+   */
+  rotate(oldId: string, input: StoreRefreshTokenInput): Promise<string | null>;
 }
 
 export function toPublicUser(user: UserRecord): PublicUser {

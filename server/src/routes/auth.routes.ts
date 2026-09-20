@@ -3,6 +3,7 @@ import express from "express";
 import type { AuthController } from "../controllers/authController.js";
 import type { AuthMiddleware } from "../middlewares/authMiddleware.js";
 import type { InMemoryRateLimiter } from "../middlewares/rateLimiter.js";
+import { csrfProtection } from "../middlewares/csrf.js";
 import { validate } from "../middlewares/validate.js";
 import {
   loginSchema,
@@ -12,6 +13,8 @@ import {
 export interface AuthRateLimiters {
   registerLimiter: InMemoryRateLimiter;
   loginLimiter: InMemoryRateLimiter;
+  refreshLimiter: InMemoryRateLimiter;
+  logoutLimiter: InMemoryRateLimiter;
 }
 
 export function createAuthRouter(
@@ -37,8 +40,18 @@ export function createAuthRouter(
     controller.login,
   );
 
-  router.post("/refresh", controller.refresh);
-  router.post("/logout", controller.logout);
+  router.post(
+    "/refresh",
+    limiters.refreshLimiter.middleware(),
+    csrfProtection,
+    controller.refresh,
+  );
+  router.post(
+    "/logout",
+    limiters.logoutLimiter.middleware(),
+    csrfProtection,
+    controller.logout,
+  );
 
   return router;
 }

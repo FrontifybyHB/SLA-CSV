@@ -44,11 +44,11 @@ export const Hero = memo(function Hero() {
         </p>
 
         <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2.5 sm:gap-3">
-          <DashboardLink className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-sla-primary-container text-white text-body-md font-semibold text-nowrap rounded-lg border-none cursor-pointer transition-all duration-150 shadow-sm hover:bg-sla-primary hover:shadow-md hover:-translate-y-px active:translate-y-0 active:scale-[0.99]">
+          <DashboardLink className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-sla-primary-container text-sla-on-primary text-body-md font-semibold text-nowrap rounded-[5px] border-none cursor-pointer transition-all duration-150 shadow-sm hover:bg-sla-primary hover:shadow-md hover:-translate-y-px active:translate-y-0 active:scale-[0.99]">
             <Icon name="rocket_launch" size={17} />
             <span>Launch Dashboard</span>
           </DashboardLink>
-          <a href="#api" className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-white border border-sla-outline-variant text-sla-on-surface text-body-md font-semibold text-nowrap rounded-lg cursor-pointer transition-all duration-150 shadow-sm hover:bg-sla-surface-container-low hover:shadow-md hover:-translate-y-px active:translate-y-0 active:scale-[0.99]">
+          <a href="#api" className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-white border border-sla-outline-variant text-sla-on-surface text-body-md font-semibold text-nowrap rounded-[5px] cursor-pointer transition-all duration-150 shadow-sm hover:bg-sla-surface-container-low hover:shadow-md hover:-translate-y-px active:translate-y-0 active:scale-[0.99]">
             <Icon name="terminal" size={17} />
             <span>API example</span>
           </a>

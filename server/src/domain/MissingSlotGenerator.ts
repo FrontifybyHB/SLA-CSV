@@ -1,5 +1,11 @@
 import type { CanonicalSlot } from "./SlotResolver.js";
 import { SLOT_DURATION_MS } from "./AgentEvidenceResolver.js";
+import { ImportError } from "../errors/ImportError.js";
+
+// Upper bound on the date span a single upload may cover. Without it, two
+// rows dated decades apart force millions of 15-minute slots to be
+// generated and inserted in one transaction from a <1 KB file (DoS).
+const MAX_SPAN_DAYS = 366;
 
 export class MissingSlotGenerator {
   constructor() {}
@@ -16,6 +22,14 @@ export class MissingSlotGenerator {
 
     const startMs = Math.floor(minTime.getTime() / SLOT_DURATION_MS) * SLOT_DURATION_MS;
     const endMs = Math.floor(maxTime.getTime() / SLOT_DURATION_MS) * SLOT_DURATION_MS;
+
+    if (endMs - startMs > MAX_SPAN_DAYS * 24 * 60 * 60 * 1000) {
+      throw new ImportError(
+        "DATE_SPAN_TOO_LARGE",
+        `CSV timestamps for service "${service}" span more than ${MAX_SPAN_DAYS} days. ` +
+          `Split the file into smaller time windows and re-upload.`,
+      );
+    }
 
     const allSlots: CanonicalSlot[] = [];
 

@@ -9,15 +9,19 @@ import {
   statsQuerySchema,
 } from "../validators/request.validator.js";
 import { validate } from "../middlewares/validate.js";
+import type { InMemoryRateLimiter } from "../middlewares/rateLimiter.js";
 
 export function createReportingRouter(
   controller: DashboardController,
   auth: AuthMiddleware,
+  reportingLimiter?: InMemoryRateLimiter,
 ): express.Router {
   const router = express.Router();
+  const throttle = reportingLimiter ? [reportingLimiter.middleware()] : [];
 
   router.get(
     "/stats",
+    ...throttle,
     auth.requireAuth(),
     validate(statsQuerySchema, "query"),
     controller.stats,
@@ -25,6 +29,7 @@ export function createReportingRouter(
 
   router.get(
     "/logs",
+    ...throttle,
     auth.requireAuth(),
     validate(logsQuerySchema, "query"),
     controller.logs,
@@ -32,6 +37,7 @@ export function createReportingRouter(
 
   router.get(
     "/slots",
+    ...throttle,
     auth.requireAuth(),
     validate(slotsQuerySchema, "query"),
     controller.slots,
@@ -39,6 +45,7 @@ export function createReportingRouter(
 
   router.get(
     "/issues",
+    ...throttle,
     auth.requireAuth(),
     validate(issuesQuerySchema, "query"),
     controller.issues,

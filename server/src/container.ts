@@ -76,6 +76,14 @@ export const authMiddleware = new AuthMiddleware(tokenService);
 export const authController = new AuthController(authService, authCookieConfig);
 export const loginLimiter = new InMemoryRateLimiter({ windowMs: 60_000, max: 5 });
 export const registerLimiter = new InMemoryRateLimiter({ windowMs: 60_000, max: 5 });
+// Anonymous but cookie-gated endpoints: generous, but not unlimited —
+// refresh/logout loops and reporting scrapes must not be free.
+export const refreshLimiter = new InMemoryRateLimiter({ windowMs: 60_000, max: 30 });
+export const logoutLimiter = new InMemoryRateLimiter({ windowMs: 60_000, max: 30 });
+// 5 MB CSVs run the full parse/normalize/import pipeline in one request.
+export const uploadLimiter = new InMemoryRateLimiter({ windowMs: 60_000, max: 20 });
+// Dashboard polling hits these constantly; cap well above normal use.
+export const reportingLimiter = new InMemoryRateLimiter({ windowMs: 60_000, max: 300 });
 
 export const slaDatasetImporter = new SlaDatasetImporter(
   slaCsvProcessor,

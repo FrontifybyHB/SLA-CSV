@@ -147,7 +147,7 @@ function AvailabilityCard({ stats }: { stats: StatsSummary | undefined }) {
         {stats.availabilityPct.toFixed(3)}
         <span className="text-sm text-sla-secondary">%</span>
       </p>
-      <p className="text-body-sm text-text-muted">
+      <p className="text-body-sm text-sla-secondary">
         Target <span className="font-mono font-semibold text-sla-on-surface">{SLA_TARGET_PCT.toFixed(1)}%</span>{' '}
         <span className={`font-mono font-semibold ${delta >= 0 ? 'text-success' : 'text-danger'}`}>
           ({delta >= 0 ? '+' : ''}
@@ -225,18 +225,18 @@ function IncidentsCard({
                   <span className="font-mono">
                     latency {b.latencyMs === null ? '—' : `${b.latencyMs}ms`}
                   </span>
-                  <span className="flex gap-3">
+                  <span className="flex gap-3 shrink-0">
                     <button
                       type="button"
                       onClick={() => onAcknowledge(key)}
-                      className="font-semibold text-sla-secondary hover:text-sla-on-surface hover:underline"
+                      className="font-semibold text-sla-secondary rounded-sm hover:text-sla-on-surface hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-sla-primary focus-visible:ring-offset-1"
                     >
                       Acknowledge
                     </button>
                     <button
                       type="button"
                       onClick={onDiagnose}
-                      className="font-semibold text-sla-primary hover:underline"
+                      className="font-semibold text-sla-primary rounded-sm hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-sla-primary focus-visible:ring-offset-1"
                     >
                       Inspect ↓
                     </button>
@@ -341,7 +341,7 @@ function TrendCard({ slots, range }: { slots: SlotRecord[]; range: ReportingRang
               ),
             )}
           </svg>
-          <div className="absolute left-2 top-2 bg-white border border-sla-outline-variant rounded-sm px-2 py-1 font-mono text-label-sm">
+          <div className="absolute left-2 top-2 max-w-[calc(100%-1rem)] truncate bg-white border border-sla-outline-variant rounded-sm px-2 py-1 font-mono text-label-sm">
             avg <span className="font-bold">{formatMs(avg)}</span> · max{' '}
             <span className="font-bold">{formatMs(maxLatency)}</span>
           </div>
@@ -373,6 +373,15 @@ function DiagnosticsDrawer({
   invalidating: boolean
 }) {
   const [tab, setTab] = useState<DrawerTab>('telemetry')
+
+  useEffect(() => {
+    if (!open) return
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [open, onClose])
 
   if (!open) return null
 
@@ -662,7 +671,7 @@ export function OverviewPage() {
         />
 
         {/* Controls */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5 mb-4 p-2.5 border border-sla-outline-variant/60 rounded-md bg-white shadow-[0_1px_2px_rgb(16_24_40/0.05)]">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5 mb-4 p-2.5 border border-sla-outline-variant/60 rounded-[5px] bg-white shadow-[0_1px_2px_rgb(16_24_40/0.05)]">
           <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Time range">
             {RANGE_PRESETS.map((p) => (
               <button
@@ -670,10 +679,10 @@ export function OverviewPage() {
                 type="button"
                 onClick={() => setPreset(p.id)}
                 aria-pressed={preset === p.id}
-                className={`px-2.5 py-1 rounded-sm font-mono text-label-sm transition-colors ${
+                className={`px-2.5 py-1 rounded-sm font-mono text-label-sm transition-colors border ${
                   preset === p.id
-                    ? 'bg-sla-primary-container text-white font-semibold'
-                    : 'text-sla-secondary hover:bg-sla-surface border border-sla-outline-variant'
+                    ? 'bg-sla-primary-container border-sla-primary-container text-sla-on-primary font-semibold'
+                    : 'text-sla-secondary hover:bg-sla-surface border-sla-outline-variant'
                 }`}
               >
                 {p.label}
@@ -696,7 +705,8 @@ export function OverviewPage() {
               <select
                 value={datasetId ?? ''}
                 onChange={(e) => handleDatasetChange(e.target.value)}
-                className="w-full min-w-0 sm:w-auto sm:max-w-[16rem] px-2 py-1.5 border border-sla-outline-variant rounded-sm bg-sla-surface font-mono text-label-md cursor-pointer text-sla-on-surface"
+                title={dataset?.filename ?? 'Select dataset'}
+                className="w-full min-w-0 max-w-full sm:w-auto sm:max-w-[16rem] px-2 py-1.5 border border-sla-outline-variant rounded-sm bg-sla-surface font-mono text-label-md cursor-pointer text-sla-on-surface"
               >
                 {datasets.map((d) => (
                   <option key={d.datasetId} value={d.datasetId}>
@@ -897,7 +907,7 @@ export function OverviewPage() {
                         type="button"
                         disabled={logPage <= 1}
                         onClick={() => setLogPage((p) => Math.max(1, p - 1))}
-                        className="rounded-lg border border-sla-outline-variant bg-white px-2.5 py-1 font-mono text-[12px] disabled:opacity-40 hover:border-sla-outline active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-sla-primary focus-visible:ring-offset-1"
+                        className="rounded-[5px] border border-sla-outline-variant bg-white px-2.5 py-1 font-mono text-[12px] disabled:opacity-40 hover:border-sla-outline active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-sla-primary focus-visible:ring-offset-1"
                       >
                         ← Prev
                       </button>
@@ -908,7 +918,7 @@ export function OverviewPage() {
                         type="button"
                         disabled={logPage >= logPages}
                         onClick={() => setLogPage((p) => Math.min(logPages, p + 1))}
-                        className="rounded-lg border border-sla-outline-variant bg-white px-2.5 py-1 font-mono text-[12px] disabled:opacity-40 hover:border-sla-outline active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-sla-primary focus-visible:ring-offset-1"
+                        className="rounded-[5px] border border-sla-outline-variant bg-white px-2.5 py-1 font-mono text-[12px] disabled:opacity-40 hover:border-sla-outline active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-sla-primary focus-visible:ring-offset-1"
                       >
                         Next →
                       </button>

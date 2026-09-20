@@ -25,5 +25,7 @@ export const registerSchema = Joi.object({
 
 export const loginSchema = Joi.object({
   email,
-  password: Joi.string().required(),
+  // Bound the password so a ~100KB body can't be turned into a bcrypt CPU
+  // burn per attempt (bcrypt truncates past 72 bytes anyway).
+  password: Joi.string().max(128).required(),
 });

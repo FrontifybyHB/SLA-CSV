@@ -72,7 +72,10 @@ export const HowItWorksSection = memo(function HowItWorksSection() {
                 Each import commits atomically — no partial datasets.
               </span>
             </div>
-            <div className="text-sla-outline font-mono overflow-hidden text-ellipsis whitespace-nowrap">
+            <div
+              className="text-sla-secondary font-mono overflow-hidden text-ellipsis whitespace-nowrap"
+              title="POST /api/v1/datasets · Content-Type: text/csv"
+            >
               POST /api/v1/datasets · Content-Type: text/csv
             </div>
           </div>

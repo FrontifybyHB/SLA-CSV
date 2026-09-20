@@ -26,14 +26,21 @@ export const PasswordField = memo(function PasswordField({
   const [visible, setVisible] = useState(false)
   const toggle = useCallback(() => setVisible((v) => !v), [])
 
+  const showHeader = label !== '' || rightSlot !== undefined
   return (
     <div className="flex flex-col gap-1.5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <label htmlFor={id} className="text-label-md font-mono text-sla-on-surface">
-          {label}
-        </label>
-        {rightSlot}
-      </div>
+      {showHeader ? (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          {label !== '' ? (
+            <label htmlFor={id} className="text-label-md font-mono text-sla-on-surface">
+              {label}
+            </label>
+          ) : (
+            <span />
+          )}
+          {rightSlot}
+        </div>
+      ) : null}
       <div className="relative">
         <div className="relative bg-sla-surface-container-lowest border border-sla-outline-variant/60 rounded-[5px] transition-colors focus-within:border-sla-primary focus-within:shadow-focus">
           <input

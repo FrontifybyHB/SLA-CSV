@@ -125,7 +125,7 @@ export function CsvUploadForm({ onUploaded }: CsvUploadFormProps) {
           Click to browse or drag &amp; drop — select <strong>multiple files at once</strong>, then
           upload the whole batch.
         </span>
-        <span className="mt-1 font-mono text-[11px] text-sla-text-muted">
+        <span className="mt-1 font-mono text-[11px] text-sla-secondary">
           RFC-4180 · max 5 MB each · agent_id, timestamp, status (+ latency_ms, service, region)
         </span>
         <input
@@ -148,7 +148,7 @@ export function CsvUploadForm({ onUploaded }: CsvUploadFormProps) {
       {batchError ? (
         <p
           role="alert"
-          className="rounded-lg border border-sla-danger/30 bg-sla-danger-soft px-3 py-2 text-[0.8125rem] leading-relaxed text-sla-danger"
+          className="rounded-[5px] border border-sla-danger/30 bg-sla-danger-soft px-3 py-2 text-[0.8125rem] leading-relaxed text-sla-danger"
         >
           {batchError}
         </p>
@@ -160,7 +160,7 @@ export function CsvUploadForm({ onUploaded }: CsvUploadFormProps) {
             <li
               key={item.id}
               className={[
-                'flex items-center gap-2.5 rounded-lg border bg-white px-3 py-2 transition-colors duration-150',
+                'flex items-center gap-2.5 rounded-[5px] border bg-white px-3 py-2 transition-colors duration-150',
                 item.error && item.status !== 'uploading'
                   ? 'border-sla-danger/40'
                   : item.status === 'done'
@@ -183,7 +183,7 @@ export function CsvUploadForm({ onUploaded }: CsvUploadFormProps) {
                 <span className="block truncate text-[0.8125rem] font-medium text-sla-on-surface">
                   {item.file.name}
                 </span>
-                <span className="block font-mono text-[11px] text-sla-text-muted">
+                <span className="block font-mono text-[11px] text-sla-secondary">
                   {formatBytes(item.file.size)}
                   {item.status === 'done' && item.result?.observationCount !== undefined
                     ? ` · ${formatCount(item.result.observationCount)} rows`
@@ -197,7 +197,7 @@ export function CsvUploadForm({ onUploaded }: CsvUploadFormProps) {
                   type="button"
                   onClick={() => removeFile(item.id)}
                   aria-label={`Remove ${item.file.name} from queue`}
-                  className="shrink-0 rounded-md p-1 text-sla-text-muted transition-colors hover:bg-sla-bg hover:text-sla-on-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-sla-primary"
+                   className="shrink-0 rounded-[5px] p-1 text-sla-secondary transition-colors hover:bg-sla-bg hover:text-sla-on-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-sla-primary"
                 >
                   <Icon name="close" size={15} />
                 </button>

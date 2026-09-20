@@ -84,7 +84,7 @@ export const ApiExampleSection = memo(function ApiExampleSection() {
               </div>
             </div>
 
-            <DashboardLink className="inline-flex items-center gap-1.5 text-label-md font-mono font-semibold text-sla-primary text-nowrap transition-colors hover:text-sla-primary-container">
+            <DashboardLink className="inline-flex items-center gap-1.5 text-label-md font-mono font-semibold text-sla-primary text-nowrap transition-colors hover:text-sla-primary-container hover:underline">
               <span>Try it in the dashboard</span>
               <Icon name="arrow_forward" size={16} />
             </DashboardLink>

@@ -14,7 +14,11 @@ import {
   datasetController,
   dashboardController,
   loginLimiter,
+  logoutLimiter,
+  refreshLimiter,
   registerLimiter,
+  reportingLimiter,
+  uploadLimiter,
 } from "./container.js";
 import { requestId } from "./middlewares/requestId.js";
 import { notFoundHandler } from "./middlewares/notFound.js";
@@ -84,16 +88,20 @@ export function createApp(): express.Express {
   app.use(express.json({ limit: "100kb" }));
   app.use(cookieParser());
 
-  // Cache-Control for GET endpoints (imported data is immutable)
+  // Cache-Control for GET endpoints (imported data is immutable).
+  // Responses are per-user (cookie auth), so they must NEVER be `public`:
+  // shared caches would serve one user's datasets to another.
   app.use("/api/v1/datasets", (req, res, next) => {
     if (req.method === "GET") {
-      res.set("Cache-Control", "public, max-age=300, stale-while-revalidate=600");
+      res.set("Cache-Control", "private, max-age=300, stale-while-revalidate=600");
+      res.set("Vary", "Cookie, Authorization");
     }
     next();
   });
   app.use("/api/v1/reporting", (req, res, next) => {
     if (req.method === "GET") {
-      res.set("Cache-Control", "public, max-age=300, stale-while-revalidate=600");
+      res.set("Cache-Control", "private, max-age=300, stale-while-revalidate=600");
+      res.set("Vary", "Cookie, Authorization");
     }
     next();
   });
@@ -118,16 +126,26 @@ export function createApp(): express.Express {
         data: { db: "up", schema: "ready", environment: env.NODE_ENV },
       });
     } catch (err) {
+      // Production callers get a minimal signal; internals (connection
+      // errors can include host/db/user fragments) stay in server logs.
+      const production = env.NODE_ENV === "production";
+      if (production) {
+        logger.error("Health probe failed", {
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
       sendSuccess(res, {
         statusCode: 200,
         message: "Degraded",
-        data: {
-          db: "down",
-          schema: "unknown",
-          environment: env.NODE_ENV,
-          hint: "Check DATABASE_URL and run 'npm run migrate'.",
-          error: err instanceof Error ? err.message : String(err),
-        },
+        data: production
+          ? { db: "down", schema: "unknown", environment: env.NODE_ENV }
+          : {
+              db: "down",
+              schema: "unknown",
+              environment: env.NODE_ENV,
+              hint: "Check DATABASE_URL and run 'npm run migrate'.",
+              error: err instanceof Error ? err.message : String(err),
+            },
       });
     }
   });
@@ -135,9 +153,11 @@ export function createApp(): express.Express {
   app.use("/api/v1/auth", createAuthRouter(authController, {
     registerLimiter,
     loginLimiter,
+    refreshLimiter,
+    logoutLimiter,
   }, authMiddleware));
-  app.use("/api/v1/datasets", createDatasetRouter(datasetController, authMiddleware));
-  app.use("/api/v1/reporting", createReportingRouter(dashboardController, authMiddleware));
+  app.use("/api/v1/datasets", createDatasetRouter(datasetController, authMiddleware, uploadLimiter));
+  app.use("/api/v1/reporting", createReportingRouter(dashboardController, authMiddleware, reportingLimiter));
 
   app.use(notFoundHandler);
   app.use(errorHandler);

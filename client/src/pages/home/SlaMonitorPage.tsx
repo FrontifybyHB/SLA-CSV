@@ -26,7 +26,7 @@ export function SlaMonitorPage() {
             <a className="hidden sm:inline-flex items-center px-2.5 py-1.5 text-label-sm text-sla-secondary text-decoration-none rounded-sm hover:text-sla-on-surface hover:bg-sla-surface-container-low transition-colors whitespace-nowrap" href="/login">
               Sign in
             </a>
-            <DashboardLink className="inline-flex items-center justify-center gap-1.5 min-w-0 max-w-[10rem] px-3 py-1.5 bg-sla-primary-container text-sla-on-primary text-label-sm font-medium text-decoration-none rounded-sm border-none cursor-pointer transition-colors shadow-[0_1px_2px_rgb(16_24_40/0.06)] hover:bg-sla-primary whitespace-nowrap">
+            <DashboardLink className="inline-flex items-center justify-center gap-1.5 min-w-0 max-w-[12rem] px-3 py-1.5 bg-sla-primary-container text-sla-on-primary text-label-sm font-medium text-decoration-none rounded-sm border-none cursor-pointer transition-colors shadow-[0_1px_2px_rgb(16_24_40/0.06)] hover:bg-sla-primary whitespace-nowrap">
               <span className="truncate">Open Dashboard</span>
               <Icon name="arrow_forward" size={15} />
             </DashboardLink>

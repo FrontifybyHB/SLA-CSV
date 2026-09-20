@@ -113,6 +113,17 @@ class FakeRefreshTokenRepository implements IRefreshTokenRepository {
     }
   }
 
+  async rotate(oldId: string, input: StoreRefreshTokenInput): Promise<string | null> {
+    const row = this.rows.get(oldId);
+    if (!row || row.revokedAt || row.expiresAt.getTime() <= Date.now()) {
+      return null;
+    }
+    const newId = await this.store(input);
+    row.revokedAt = new Date();
+    row.replacedBy = newId;
+    return newId;
+  }
+
   async allRows(): Promise<RefreshTokenRecord[]> {
     return Array.from(this.rows.values());
   }

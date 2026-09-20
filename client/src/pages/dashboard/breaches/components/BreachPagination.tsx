@@ -39,18 +39,18 @@ export const BreachPagination = memo(function BreachPagination({
           type="button"
           disabled={page <= 1}
           onClick={onPrev}
-          className="border border-sla-outline-variant bg-white px-2.5 py-1 text-sla-secondary rounded-lg transition-all duration-150 hover:text-sla-on-surface hover:border-sla-outline disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-sla-primary focus-visible:ring-offset-1"
+          className="border border-sla-outline-variant bg-white px-2.5 py-1 text-sla-secondary rounded-[5px] transition-all duration-150 hover:text-sla-on-surface hover:border-sla-outline disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-sla-primary focus-visible:ring-offset-1"
         >
           Prev
         </button>
-        <span aria-current="page" className="border border-sla-primary-container bg-sla-primary-container text-white font-semibold px-2.5 py-1 rounded-lg select-none">
+        <span aria-current="page" className="border border-sla-primary-container bg-sla-primary-container text-sla-on-primary font-semibold px-2.5 py-1 rounded-[5px] select-none">
           {page}
         </span>
         <button
           type="button"
           disabled={page >= pages}
           onClick={onNext}
-          className="border border-sla-outline-variant bg-white px-2.5 py-1 text-sla-secondary rounded-lg transition-all duration-150 hover:text-sla-on-surface hover:border-sla-outline disabled:opacity-40 disabled:cursor-not-allowed font-medium whitespace-nowrap active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-sla-primary focus-visible:ring-offset-1"
+          className="border border-sla-outline-variant bg-white px-2.5 py-1 text-sla-secondary rounded-[5px] transition-all duration-150 hover:text-sla-on-surface hover:border-sla-outline disabled:opacity-40 disabled:cursor-not-allowed font-medium whitespace-nowrap active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-sla-primary focus-visible:ring-offset-1"
         >
           Next
         </button>

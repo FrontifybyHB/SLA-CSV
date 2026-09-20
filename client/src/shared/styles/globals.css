@@ -40,6 +40,7 @@
   --color-rose-bg: #fef2f2;
   --font-body: "Inter", sans-serif;
   --font-mono: "JetBrains Mono", monospace;
+  --font-sla: "Geist", system-ui, -apple-system, sans-serif;
 
   /* Colors - SLA Monitor */
   --color-sla-bg: #f8f9ff;

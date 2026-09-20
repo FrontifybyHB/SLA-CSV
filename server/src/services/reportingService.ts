@@ -3,6 +3,7 @@ import type { IReportingRepository, ReportingFilters } from "../contracts/report
 import { AppError } from "../middlewares/appError.js";
 
 const MAX_RANGE_DAYS = 90;
+const MAX_PAGE = 1000;
 
 export class ReportingService {
   constructor(private readonly repository: IReportingRepository) {}
@@ -21,7 +22,7 @@ export class ReportingService {
     filters: ReportingFilters = {},
   ): Promise<LogsResult> {
     const resolved = this.resolveRange(range);
-    const safePage = Math.max(page, 1);
+    const safePage = Math.min(Math.max(page, 1), MAX_PAGE);
     const safePageSize = Math.min(Math.max(pageSize, 1), 500);
     return this.repository.getLogs(userId, datasetIds, resolved, safePage, safePageSize, filters);
   }
@@ -35,7 +36,7 @@ export class ReportingService {
     filters: ReportingFilters = {},
   ): Promise<SlotsResult> {
     const resolved = this.resolveRange(range);
-    const safePage = Math.max(page, 1);
+    const safePage = Math.min(Math.max(page, 1), MAX_PAGE);
     const safePageSize = Math.min(Math.max(pageSize, 1), 500);
     return this.repository.getSlots(userId, datasetIds, resolved, safePage, safePageSize, filters);
   }
@@ -46,7 +47,7 @@ export class ReportingService {
     page: number,
     pageSize: number,
   ): Promise<IssuesResult> {
-    const safePage = Math.max(page, 1);
+    const safePage = Math.min(Math.max(page, 1), MAX_PAGE);
     const safePageSize = Math.min(Math.max(pageSize, 1), 500);
     return this.repository.getIssues(userId, datasetIds, safePage, safePageSize);
   }

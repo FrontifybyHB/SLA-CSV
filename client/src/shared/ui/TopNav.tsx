@@ -51,8 +51,8 @@ export const TopNav = memo(function TopNav({
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 border-b border-sla-outline-variant/60 shadow-[0_1px_2px_rgb(16_24_40/0.06)] backdrop-blur-[12px]">
-      <div className={`grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center min-h-12 gap-2 sm:gap-3 ${containerClassName}`.trim()}>
-        <div className="flex items-center gap-2 min-w-0 justify-self-start">
+      <div className={`flex items-center justify-between min-h-12 gap-2 sm:gap-3 ${containerClassName}`.trim()}>
+        <div className="flex items-center gap-2 min-w-0 flex-shrink-0">
           <div className="w-6 h-6 flex-shrink-0 rounded-sm bg-sla-primary-container flex items-center justify-center text-sla-on-primary" aria-hidden="true">
             <Icon name="query_stats" size={15} />
           </div>
@@ -61,7 +61,7 @@ export const TopNav = memo(function TopNav({
           </a>
         </div>
 
-        <nav className="hidden lg:flex items-center justify-center gap-0.5 list-none m-0 p-0" aria-label="Primary">
+        <nav className="hidden lg:flex items-center justify-center gap-0.5 list-none m-0 p-0 min-w-0 flex-1" aria-label="Primary">
           {links.map((link) => (
             <a
               key={link.label}
@@ -78,7 +78,7 @@ export const TopNav = memo(function TopNav({
           ))}
         </nav>
 
-        <div className="flex items-center justify-end gap-1.5 sm:gap-2 min-w-0">
+        <div className="flex items-center justify-end gap-1.5 sm:gap-2 min-w-0 flex-shrink-0 ml-auto lg:ml-0">
           {actions}
           <IconButton
             label={menuOpen ? 'Close navigation menu' : 'Open navigation menu'}

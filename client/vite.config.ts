@@ -53,7 +53,7 @@ export default defineConfig({
     },
     minify: 'esbuild',
     target: 'es2022',
-    sourcemap: true,
+    sourcemap: false,
   },
   test: {
     environment: 'jsdom',

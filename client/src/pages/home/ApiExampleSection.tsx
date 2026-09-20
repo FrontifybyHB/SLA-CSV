@@ -2,8 +2,10 @@ import { memo, useCallback } from 'react'
 import { Icon } from '@/shared/ui/Icon'
 import { IconButton } from '@/shared/ui/IconButton'
 import { useCopyToClipboard } from '@/shared/lib/useCopyToClipboard'
+import { DashboardLink } from '@/features/auth/components/DashboardLink'
+import { apiOrigin } from '@/shared/config/env'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000'
+const API_BASE_URL = apiOrigin
 
 const CURL_SNIPPET = `curl -X POST ${API_BASE_URL}/api/v1/datasets \\
   -H "Authorization: Bearer $TOKEN" \\
@@ -82,10 +84,10 @@ export const ApiExampleSection = memo(function ApiExampleSection() {
               </div>
             </div>
 
-            <a href="/dashboard" className="inline-flex items-center gap-1.5 text-label-md font-mono font-semibold text-sla-primary text-nowrap transition-colors hover:text-sla-primary-container">
+            <DashboardLink className="inline-flex items-center gap-1.5 text-label-md font-mono font-semibold text-sla-primary text-nowrap transition-colors hover:text-sla-primary-container">
               <span>Try it in the dashboard</span>
               <Icon name="arrow_forward" size={16} />
-            </a>
+            </DashboardLink>
           </div>
 
           <div className="min-w-0">

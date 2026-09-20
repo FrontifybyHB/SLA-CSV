@@ -20,6 +20,9 @@ export function createQueryClient(): QueryClient {
       queries: {
         retry: retryTransientReadOnce,
         refetchOnWindowFocus: false,
+        // Serve cached reads instantly and dedupe in-flight refetches while
+        // navigating between dashboard views.
+        staleTime: 30_000,
         gcTime: 10 * 60 * 1000,
       },
     },

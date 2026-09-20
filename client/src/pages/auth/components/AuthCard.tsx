@@ -22,7 +22,7 @@ export const AuthCard = memo(function AuthCard() {
   return (
     <section className="min-w-0 lg:col-span-7">
       <div className="bg-sla-surface-container-lowest border border-sla-outline-variant/50 rounded-[16px] shadow-[0_1px_2px_rgb(16_24_40/0.06)] p-5 sm:p-6 lg:p-8">
-        <div role="tablist" aria-label="Authentication mode" className="flex items-center gap-1 p-1 bg-sla-surface-container-low border border-sla-outline-variant/30 rounded-[2px] mb-6">
+        <div role="tablist" aria-label="Authentication mode" className="flex items-center gap-1 p-1 bg-sla-surface-container-low border border-sla-outline-variant/30 rounded-[5px] mb-6">
           <button
             type="button"
             role="tab"
@@ -30,7 +30,7 @@ export const AuthCard = memo(function AuthCard() {
             aria-selected={isLogin}
             aria-controls="panel-login"
             onClick={() => handleTabChange('login')}
-            className={`flex-1 py-2 px-2 rounded-[4px] text-center text-headline-sm font-sla font-normal text-sla-secondary cursor-pointer whitespace-nowrap transition-all ${
+            className={`flex-1 py-2 px-2 rounded-[5px] text-center text-headline-sm font-sla font-normal text-sla-secondary cursor-pointer whitespace-nowrap transition-all ${
               isLogin
                 ? 'bg-sla-surface-container-lowest text-sla-on-surface font-semibold shadow-[0_1px_2px_rgb(16_24_40/0.06)]'
                 : 'hover:text-sla-on-surface'
@@ -45,7 +45,7 @@ export const AuthCard = memo(function AuthCard() {
             aria-selected={!isLogin}
             aria-controls="panel-register"
             onClick={() => handleTabChange('register')}
-            className={`flex-1 py-2 px-2 rounded-[4px] text-center text-headline-sm font-sla font-normal text-sla-secondary cursor-pointer whitespace-nowrap transition-all ${
+            className={`flex-1 py-2 px-2 rounded-[5px] text-center text-headline-sm font-sla font-normal text-sla-secondary cursor-pointer whitespace-nowrap transition-all ${
               !isLogin
                 ? 'bg-sla-surface-container-lowest text-sla-on-surface font-semibold shadow-[0_1px_2px_rgb(16_24_40/0.06)]'
                 : 'hover:text-sla-on-surface'

@@ -1,4 +1,6 @@
 import { Suspense, lazy } from 'react'
+import { Navigate } from 'react-router-dom'
+import { useSession } from '@/features/auth/hooks/useSession'
 import { AuthCard } from './components/AuthCard'
 import { AppFooter } from '@/shared/ui/AppFooter'
 import { GraphBackground } from '@/shared/ui/GraphBackground'
@@ -14,6 +16,14 @@ const ComplianceStrip = lazy(() =>
 )
 
 export function AuthPage() {
+  const session = useSession()
+
+  // Already signed in (valid access cookie, or refreshable session): don't
+  // show the login form, go straight to the dashboard.
+  if (session.data) {
+    return <Navigate to="/dashboard" replace />
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-sla-bg text-sla-on-surface font-sla antialiased">
       <a href="#auth-main" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-60 focus:px-4 focus:py-2 focus:bg-sla-primary-container focus:text-sla-on-primary focus:rounded-sm focus:font-semibold focus:text-sm">

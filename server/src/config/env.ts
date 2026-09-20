@@ -13,15 +13,33 @@ function optional(name: string, value: string | undefined, fallback: string): st
   return value ?? fallback;
 }
 
-function parseCorsOrigins(value: string | undefined): string[] {
-  if (!value) {
-    return ["http://localhost:5173"];
-  }
-  return value.split(",").map((s) => s.trim()).filter(Boolean);
+function normalizeOrigin(value: string): string {
+  return value.trim().replace(/\/+$/, "");
 }
 
+function parseCorsOrigins(value: string | undefined): string[] {
+  if (!value) {
+    return ["http://localhost:5173", "http://localhost:5174"];
+  }
+  const origins = value.split(",").map(normalizeOrigin).filter(Boolean);
+  return origins.length > 0 ? [...new Set(origins)] : ["http://localhost:5173", "http://localhost:5174"];
+}
+
+function parseSameSite(value: string | undefined, isProduction: boolean): "lax" | "none" | "strict" {
+  const normalized = (value ?? "").trim().toLowerCase();
+  if (normalized === "none" || normalized === "lax" || normalized === "strict") {
+    return normalized;
+  }
+  // Cross-origin production deployments (Vercel frontend -> separate API
+  // origin) need SameSite=None + Secure or the browser drops the session
+  // cookies entirely. Same-origin keeps lax for CSRF safety.
+  return isProduction ? "none" : "lax";
+}
+
+const nodeEnv = process.env.NODE_ENV ?? "development";
+
 const env = {
-  NODE_ENV: process.env.NODE_ENV ?? "development",
+  NODE_ENV: nodeEnv,
   PORT: Number(process.env.PORT ?? 3000),
   DATABASE_URL: required(
     "DATABASE_URL",
@@ -37,6 +55,12 @@ const env = {
     process.env.REFRESH_TOKEN_PEPPER,
     "dev-pepper-change-in-production"
   ),
+  COOKIE_SAME_SITE: parseSameSite(process.env.COOKIE_SAME_SITE, nodeEnv === "production"),
+  COOKIE_SECURE: (process.env.COOKIE_SECURE ?? "").trim().toLowerCase() === "true"
+    ? true
+    : (process.env.COOKIE_SECURE ?? "").trim().toLowerCase() === "false"
+      ? false
+      : nodeEnv === "production" || parseSameSite(process.env.COOKIE_SAME_SITE, nodeEnv === "production") === "none",
 };
 
 export default env;

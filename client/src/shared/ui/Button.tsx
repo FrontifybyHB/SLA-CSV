@@ -33,7 +33,7 @@ export function Button({
   ...rest
 }: ButtonProps) {
   const classes = [
-    'inline-flex items-center justify-center gap-2 rounded-lg border border-transparent font-medium leading-none cursor-pointer transition-all duration-150 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-sla-primary focus-visible:ring-offset-2',
+    'inline-flex items-center justify-center gap-2 rounded-[5px] border border-transparent font-medium leading-none cursor-pointer transition-all duration-150 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-sla-primary focus-visible:ring-offset-2',
     variantClasses[variant],
     sizeClasses[size],
     pending ? 'cursor-progress' : '',

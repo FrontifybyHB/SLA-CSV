@@ -1,7 +1,6 @@
 import { request, type RequestControl } from './kernel'
 import type { QueryValues } from './query-string'
-
-const apiBase = (import.meta.env.VITE_API_BASE ?? '/api/v1').replace(/\/+$/, '')
+import { apiBase } from '../config/env'
 
 const DEFAULT_GET_TIMEOUT_MS = 15_000
 const DEFAULT_UPLOAD_TIMEOUT_MS = 60_000

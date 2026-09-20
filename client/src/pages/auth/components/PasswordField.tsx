@@ -35,7 +35,7 @@ export const PasswordField = memo(function PasswordField({
         {rightSlot}
       </div>
       <div className="relative">
-        <div className="relative bg-sla-surface-container-lowest border border-sla-outline-variant/60 rounded-[2px] transition-colors focus-within:border-sla-primary focus-within:shadow-focus">
+        <div className="relative bg-sla-surface-container-lowest border border-sla-outline-variant/60 rounded-[5px] transition-colors focus-within:border-sla-primary focus-within:shadow-focus">
           <input
             id={id}
             name={id}

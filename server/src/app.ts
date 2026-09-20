@@ -31,8 +31,10 @@ export function createApp(): express.Express {
   app.set("trust proxy", 1);
 
   app.use(requestId);
-  app.use(morgan("dev", {
+  app.use(morgan(env.NODE_ENV === "production" ? "combined" : "dev", {
     stream: { write: (message: string) => logger.info(message.trim()) },
+    // Health probes poll often; keep them out of the access logs.
+    skip: (req) => req.path === "/health",
   }));
   app.use(helmet({
     contentSecurityPolicy: {
@@ -42,7 +44,9 @@ export function createApp(): express.Express {
         styleSrc: ["'self'", "'unsafe-inline'"],
         imgSrc: ["'self'", "data:", "blob:"],
         fontSrc: ["'self'"],
-        connectSrc: ["'self'"],
+        // The frontend calls this API cross-origin in split deployments;
+        // allow-list the configured web origins or CSP blocks every fetch.
+        connectSrc: ["'self'", ...env.CORS_ORIGIN],
         frameSrc: ["'none'"],
         objectSrc: ["'none'"],
         baseUri: ["'self'"],
@@ -60,7 +64,10 @@ export function createApp(): express.Express {
       if (!origin) {
         return callback(null, true);
       }
-      if (env.CORS_ORIGIN.includes(origin)) {
+      // Browsers send the origin without a trailing slash; normalize both
+      // sides so "https://app.vercel.app/" in env still matches.
+      const normalized = origin.trim().replace(/\/+$/, "");
+      if (env.CORS_ORIGIN.includes(normalized)) {
         return callback(null, true);
       }
       return callback(new Error(`CORS policy: origin ${origin} not allowed`), false);
@@ -68,6 +75,10 @@ export function createApp(): express.Express {
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "X-Filename"],
+    exposedHeaders: ["X-Request-Id"],
+    // Cache preflight responses for 24h: repeat API calls skip the OPTIONS
+    // round-trip entirely.
+    maxAge: 86400,
   }));
   app.use(compression({ level: 6, threshold: 1024 }));
   app.use(express.json({ limit: "100kb" }));

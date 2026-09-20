@@ -1,6 +1,7 @@
 import { memo } from 'react'
 import { GraphBackground } from '@/shared/ui/GraphBackground'
 import { Icon } from '@/shared/ui/Icon'
+import { DashboardLink } from '@/features/auth/components/DashboardLink'
 
 const HERO_STATS = [
   { value: '1.2M', label: 'rows / sec', live: true },
@@ -28,13 +29,6 @@ export const Hero = memo(function Hero() {
         className="pointer-events-none absolute bottom-[-40%] left-[-8%] h-[22rem] w-[22rem] rounded-full opacity-15 blur-3xl"
         style={{ background: 'radial-gradient(circle, #006948 0%, transparent 65%)' }}
       />
-      {/* Horizontal telemetry pulse line */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute left-0 right-0 top-1/2 h-px opacity-40"
-        style={{ background: 'linear-gradient(to right, transparent, #1d4ed8 30%, #1d4ed8 70%, transparent)' }}
-      />
-
       <div className="home-container relative max-w-[56rem] min-w-0 animate-fade-up">
         <p className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-sla-primary/20 bg-sla-primary/5 px-3 py-1 font-mono text-label-sm font-semibold uppercase tracking-wide text-sla-primary">
           CSV-driven SLA observability
@@ -50,10 +44,10 @@ export const Hero = memo(function Hero() {
         </p>
 
         <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2.5 sm:gap-3">
-          <a href="/dashboard" className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-sla-primary-container text-white text-body-md font-semibold text-nowrap rounded-lg border-none cursor-pointer transition-all duration-150 shadow-sm hover:bg-sla-primary hover:shadow-md hover:-translate-y-px active:translate-y-0 active:scale-[0.99]">
+          <DashboardLink className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-sla-primary-container text-white text-body-md font-semibold text-nowrap rounded-lg border-none cursor-pointer transition-all duration-150 shadow-sm hover:bg-sla-primary hover:shadow-md hover:-translate-y-px active:translate-y-0 active:scale-[0.99]">
             <Icon name="rocket_launch" size={17} />
             <span>Launch Dashboard</span>
-          </a>
+          </DashboardLink>
           <a href="#api" className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-white border border-sla-outline-variant text-sla-on-surface text-body-md font-semibold text-nowrap rounded-lg cursor-pointer transition-all duration-150 shadow-sm hover:bg-sla-surface-container-low hover:shadow-md hover:-translate-y-px active:translate-y-0 active:scale-[0.99]">
             <Icon name="terminal" size={17} />
             <span>API example</span>

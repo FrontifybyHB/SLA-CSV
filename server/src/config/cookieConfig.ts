@@ -18,22 +18,25 @@ export interface AuthCookie {
   options: CookieOptions;
 }
 
-// sameSite 'lax' (not 'strict') so a post-login redirect navigating top-level still
-// carries the cookie. If the frontend and backend ever move to different origins this
-// must become 'none' + secure and explicit CSRF protection (double-submit token) is
-// required — do not ship cross-origin cookies without it.
+// sameSite defaults to 'lax' in dev (CSRF-safe, top-level redirects work).
+// In production with a cross-origin frontend it becomes 'none' + secure via
+// COOKIE_SAME_SITE/COOKIE_SECURE so the browser actually sends the session
+// cookies. Cross-origin + SameSite=None needs CSRF protection
+// (double-submit token) — do not ship cross-origin cookies without it.
 export class AuthCookieConfig {
   private readonly secure: boolean;
+  private readonly sameSite: "lax" | "none" | "strict";
 
-  constructor(secure = env.NODE_ENV === "production") {
+  constructor(secure = env.COOKIE_SECURE, sameSite = env.COOKIE_SAME_SITE) {
     this.secure = secure;
+    this.sameSite = sameSite;
   }
 
   private base(extra: Partial<CookieOptions>): CookieOptions {
     return {
       httpOnly: true,
       secure: this.secure,
-      sameSite: "lax",
+      sameSite: this.sameSite,
       ...extra,
     };
   }

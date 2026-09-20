@@ -7,6 +7,7 @@ import { CtaSection } from './CtaSection'
 import { AppFooter } from '@/shared/ui/AppFooter'
 import { Icon } from '@/shared/ui/Icon'
 import { SITE_NAV_LINKS, HOME_FOOTER_LINKS } from '@/shared/ui/siteNav'
+import { DashboardLink } from '@/features/auth/components/DashboardLink'
 
 export function SlaMonitorPage() {
   return (
@@ -25,16 +26,21 @@ export function SlaMonitorPage() {
             <a className="hidden sm:inline-flex items-center px-2.5 py-1.5 text-label-sm text-sla-secondary text-decoration-none rounded-sm hover:text-sla-on-surface hover:bg-sla-surface-container-low transition-colors whitespace-nowrap" href="/login">
               Sign in
             </a>
-            <a className="inline-flex items-center justify-center gap-1.5 min-w-0 max-w-[10rem] px-3 py-1.5 bg-sla-primary-container text-sla-on-primary text-label-sm font-medium text-decoration-none rounded-sm border-none cursor-pointer transition-colors shadow-[0_1px_2px_rgb(16_24_40/0.06)] hover:bg-sla-primary whitespace-nowrap" href="/dashboard">
+            <DashboardLink className="inline-flex items-center justify-center gap-1.5 min-w-0 max-w-[10rem] px-3 py-1.5 bg-sla-primary-container text-sla-on-primary text-label-sm font-medium text-decoration-none rounded-sm border-none cursor-pointer transition-colors shadow-[0_1px_2px_rgb(16_24_40/0.06)] hover:bg-sla-primary whitespace-nowrap">
               <span className="truncate">Open Dashboard</span>
               <Icon name="arrow_forward" size={15} />
-            </a>
+            </DashboardLink>
           </>
         }
         mobileExtra={
-          <a href="/login" className="py-2 text-label-sm font-mono text-sla-secondary border-b border-sla-outline-variant/30 hover:text-sla-on-surface transition-colors">
-            Sign in
-          </a>
+          <>
+            <DashboardLink className="py-2 text-label-sm font-mono font-semibold text-sla-primary border-b border-sla-outline-variant/30 hover:text-sla-on-surface transition-colors">
+              Open Dashboard
+            </DashboardLink>
+            <a href="/login" className="py-2 text-label-sm font-mono text-sla-secondary border-b border-sla-outline-variant/30 hover:text-sla-on-surface transition-colors">
+              Sign in
+            </a>
+          </>
         }
       />
 

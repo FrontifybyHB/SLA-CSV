@@ -21,7 +21,9 @@ function stubFetch(body: unknown = {}): ReturnType<typeof vi.fn> {
 }
 
 function getPathFromUrl(url: string | URL): string {
-  const u = typeof url === 'string' ? new URL(url) : url
+  // Requests use a same-origin relative base (/api/v1) in dev/prod, so
+  // resolve against a dummy origin before asserting on the path.
+  const u = typeof url === 'string' ? new URL(url, 'http://localhost') : url
   return u.pathname + u.search
 }
 
